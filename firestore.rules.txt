@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Cho phép đọc tất cả bài tập
+    match /exercises/{exerciseId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Cho phép người dùng đọc và ghi buổi tập của họ
+    match /workouts/{workoutId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Cho phép đọc chương trình tập
+    match /programs/{programId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Quy tắc cho userRoles
+    match /userRoles/{userId} {
+      // Cho phép người dùng đọc thông tin quyền của chính họ
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Cho phép admin đọc và ghi tất cả thông tin quyền
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/userRoles/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/userRoles/$(request.auth.uid)).data.role == 'admin';
+        
+      // Cho phép tạo vai trò cho chính mình (khi đăng ký)
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Quy tắc cho adminSettings
+    match /adminSettings/{document} {
+      // Chỉ cho phép đọc và ghi nếu là admin hoặc chưa có admin nào
+      allow read, write: if request.auth != null && (
+        (exists(/databases/$(database)/documents/userRoles/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/userRoles/$(request.auth.uid)).data.role == 'admin') ||
+        !exists(/databases/$(database)/documents/adminSettings/firstAdmin)
+      );
+    }
+  }
+}
