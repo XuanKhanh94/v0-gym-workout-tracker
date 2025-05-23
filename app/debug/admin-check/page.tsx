@@ -150,6 +150,7 @@ export default function AdminCheckDebugPage() {
                     <div className="flex items-center gap-2">
                       {getStatusBadge(isAdmin)}
                       {adminLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Đang kiểm tra
                     </div>
                   </div>
                 </div>
