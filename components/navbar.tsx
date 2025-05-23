@@ -257,10 +257,7 @@ export default function Navbar() {
                 </Link>
               ) : (
                 <p></p>
-                // <DropdownMenuItem onClick={handleRefreshAdminStatus}>
-                //   <RefreshCw className="mr-2 h-4 w-4" />
-                //   Kiểm tra quyền
-                // </DropdownMenuItem>
+
               )}
               <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
