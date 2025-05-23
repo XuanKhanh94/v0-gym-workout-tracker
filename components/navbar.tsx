@@ -26,16 +26,17 @@ export default function Navbar() {
   const { user, logout, isAdmin, adminLoading, adminCheckCompleted, checkAdminStatus, adminDebugInfo } = useAuth()
   const [showDebug, setShowDebug] = useState(false)
   const [logoClickCount, setLogoClickCount] = useState(0) // Move here to avoid conditional hook call
+  const [hasCheckedAdmin, setHasCheckedAdmin] = useState(false)
 
   // Kiểm tra trạng thái admin mỗi khi component được render
   useEffect(() => {
-    if (user && !adminLoading && !isAdmin) {
-      console.log("🔄 Tự động kiểm tra lại quyền admin...")
-      checkAdminStatus().catch((err) => {
-        console.error("Lỗi khi tự động kiểm tra admin:", err)
-      })
+    if (user && !adminLoading && !isAdmin && !hasCheckedAdmin) {
+      console.log(" Tự động kiểm tra quyền admin...")
+      checkAdminStatus()
+        .catch((err) => console.error(" Lỗi khi kiểm tra quyền admin:", err))
+        .finally(() => setHasCheckedAdmin(true))
     }
-  }, [user, pathname, adminLoading, isAdmin, checkAdminStatus])
+  }, [user, pathname, adminLoading, isAdmin, checkAdminStatus, hasCheckedAdmin])
 
   // Không hiển thị navbar trên các trang xác thực
   if (pathname.startsWith("/auth")) {
@@ -179,10 +180,11 @@ export default function Navbar() {
                       </Button>
                     </Link>
                   ) : (
-                    <Button variant="ghost" className="w-full justify-start" onClick={handleRefreshAdminStatus}>
-                      <RefreshCw className="h-5 w-5 mr-2" />
-                      Kiểm tra quyền
-                    </Button>
+                    <span></span>
+                    // <Button variant="ghost" className="w-full justify-start" onClick={handleRefreshAdminStatus}>
+                    //   <RefreshCw className="h-5 w-5 mr-2" />
+                    //   Kiểm tra quyền
+                    // </Button>
                   )}
                   <Button variant="ghost" className="w-full justify-start text-destructive" onClick={handleLogout}>
                     <LogOut className="h-5 w-5 mr-2" />
@@ -215,10 +217,11 @@ export default function Navbar() {
                 </Button>
               </Link>
             ) : (
-              <Button variant="ghost" className="gap-2" onClick={handleRefreshAdminStatus}>
-                <RefreshCw className="h-5 w-5" />
-                <span>Kiểm tra quyền</span>
-              </Button>
+              // <Button variant="ghost" className="gap-2" onClick={handleRefreshAdminStatus}>
+              //   <RefreshCw className="h-5 w-5" />
+              //   <span>Kiểm tra quyền</span>
+              // </Button>
+              <span></span>
             )}
           </nav>
         )}
@@ -253,10 +256,11 @@ export default function Navbar() {
                   </DropdownMenuItem>
                 </Link>
               ) : (
-                <DropdownMenuItem onClick={handleRefreshAdminStatus}>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Kiểm tra quyền
-                </DropdownMenuItem>
+                <p></p>
+                // <DropdownMenuItem onClick={handleRefreshAdminStatus}>
+                //   <RefreshCw className="mr-2 h-4 w-4" />
+                //   Kiểm tra quyền
+                // </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
