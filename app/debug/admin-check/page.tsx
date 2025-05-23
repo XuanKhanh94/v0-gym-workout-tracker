@@ -95,7 +95,7 @@ export default function AdminCheckDebugPage() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang kiểm tra...
+
               </>
             ) : (
               <>

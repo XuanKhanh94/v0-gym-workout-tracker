@@ -83,7 +83,7 @@ export default function AdminStatusDebugPage() {
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Đang kiểm tra...
+
                       </>
                     ) : (
                       <>
@@ -132,7 +132,7 @@ export default function AdminStatusDebugPage() {
                 {adminLoading ? (
                   <div className="flex items-center mt-2">
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    <span>Đang kiểm tra...</span>
+                    <span></span>
                   </div>
                 ) : (
                   <Alert variant={isAdmin ? "default" : "destructive"} className="mt-2">
