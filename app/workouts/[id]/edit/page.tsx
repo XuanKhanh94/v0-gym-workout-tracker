@@ -34,6 +34,7 @@ export default function EditWorkoutPage() {
   const [exerciseLibrary, setExerciseLibrary] = useState<Exercise[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [showSuggestionsMap, setShowSuggestionsMap] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,6 +90,16 @@ export default function EditWorkoutPage() {
 
   const updateExerciseName = (id: string, name: string) => {
     setExercises(exercises.map((exercise) => (exercise.id === id ? { ...exercise, name } : exercise)))
+    setShowSuggestionsMap((prev) => ({ ...prev, [id]: true })) // gõ chữ thì show gợi ý
+  }
+
+  const handleSelectExerciseName = (exerciseId: string, name: string) => {
+    updateExerciseName(exerciseId, name)
+    setShowSuggestionsMap((prev) => ({ ...prev, [exerciseId]: false })) // chọn xong ẩn gợi ý
+  }
+
+  const handleInputFocus = (exerciseId: string) => {
+    setShowSuggestionsMap((prev) => ({ ...prev, [exerciseId]: true })) // focus input show gợi ý
   }
 
   const addSet = (exerciseId: string) => {
@@ -104,9 +115,9 @@ export default function EditWorkoutPage() {
       exercises.map((exercise) =>
         exercise.id === exerciseId
           ? {
-              ...exercise,
-              sets: exercise.sets.filter((_, index) => index !== setIndex),
-            }
+            ...exercise,
+            sets: exercise.sets.filter((_, index) => index !== setIndex),
+          }
           : exercise,
       ),
     )
@@ -117,9 +128,9 @@ export default function EditWorkoutPage() {
       exercises.map((exercise) =>
         exercise.id === exerciseId
           ? {
-              ...exercise,
-              sets: exercise.sets.map((set, index) => (index === setIndex ? { ...set, [field]: value } : set)),
-            }
+            ...exercise,
+            sets: exercise.sets.map((set, index) => (index === setIndex ? { ...set, [field]: value } : set)),
+          }
           : exercise,
       ),
     )
@@ -293,18 +304,40 @@ export default function EditWorkoutPage() {
                     <div className="grid gap-4">
                       <div>
                         <Label htmlFor={`exercise-${exercise.id}`}>Tên bài tập</Label>
-                        <Select value={exercise.name} onValueChange={(value) => updateExerciseName(exercise.id, value)}>
-                          <SelectTrigger id={`exercise-${exercise.id}`}>
-                            <SelectValue placeholder="Chọn bài tập" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {exerciseLibrary.map((ex) => (
-                              <SelectItem key={ex.id} value={ex.name}>
-                                {ex.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="relative">
+                          <Input
+                            id={`exercise-${exercise.id}`}
+                            placeholder="Tìm kiếm bài tập..."
+                            value={exercise.name}
+                            onChange={(e) => updateExerciseName(exercise.id, e.target.value)}
+                            onFocus={() => handleInputFocus(exercise.id)}
+                            className="mb-2"
+                          />
+
+                          {showSuggestionsMap[exercise.id] && exercise.name.trim() && (
+                            <div className="absolute z-10 bottom-full mb-1 w-full bg-white border border-gray-200 rounded shadow-md max-h-48 overflow-auto">
+                              {exerciseLibrary.filter((ex) =>
+                                ex.name.toLowerCase().includes(exercise.name.toLowerCase())
+                              ).length === 0 ? (
+                                <div className="px-4 py-2 text-muted-foreground">Bài tập không tìm thấy</div>
+                              ) : (
+                                exerciseLibrary
+                                  .filter((ex) =>
+                                    ex.name.toLowerCase().includes(exercise.name.toLowerCase())
+                                  )
+                                  .map((ex) => (
+                                    <div
+                                      key={ex.id}
+                                      onClick={() => handleSelectExerciseName(exercise.id, ex.name)}
+                                      className="cursor-pointer px-4 py-2 hover:bg-gray-100"
+                                    >
+                                      {ex.name}
+                                    </div>
+                                  ))
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div>
