@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronLeft, Plus, Trash2, CalendarIcon } from "lucide-react"
+import { ChevronLeft, Plus, Trash2, CalendarIcon, Timer } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
@@ -41,6 +41,7 @@ interface Workout {
   categories?: string[]
   exercises: WorkoutExercise[]
   totalSets: number
+  duration?: number // Thêm duration field
   notes?: string
   userId: string
   createdAt: string
@@ -55,6 +56,7 @@ export default function EditWorkoutPage() {
   const [workoutName, setWorkoutName] = useState("")
   const [categories, setCategories] = useState<string[]>([])
   const [workoutDate, setWorkoutDate] = useState<Date>(new Date())
+  const [workoutDuration, setWorkoutDuration] = useState<number>(60) // Thời lượng tập tính bằng phút
   const [notes, setNotes] = useState("")
   const [exercises, setExercises] = useState<
     Array<{
@@ -81,6 +83,11 @@ export default function EditWorkoutPage() {
             // Set ngày tập từ dữ liệu
             if (workoutData.date) {
               setWorkoutDate(new Date(workoutData.date))
+            }
+
+            // Set thời lượng tập từ dữ liệu
+            if (workoutData.duration && workoutData.duration > 0) {
+              setWorkoutDuration(workoutData.duration)
             }
 
             // Xử lý categories - có thể là string hoặc array
@@ -203,6 +210,24 @@ export default function EditWorkoutPage() {
     }
   }
 
+  // Xử lý thay đổi thời lượng tập
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+
+    // Nếu input trống, set về 0
+    if (value === "" || value === null || value === undefined) {
+      setWorkoutDuration("")
+      return
+    }
+
+    const numValue = Number(value)
+
+    // Kiểm tra giá trị hợp lệ
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 300) {
+      setWorkoutDuration(numValue)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -212,6 +237,16 @@ export default function EditWorkoutPage() {
       toast({
         title: "Thiếu thông tin",
         description: "Vui lòng điền đầy đủ thông tin buổi tập và thêm ít nhất một bài tập.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Kiểm tra thời lượng tập
+    if (workoutDuration <= 0) {
+      toast({
+        title: "Thời lượng không hợp lệ",
+        description: "Thời lượng tập phải lớn hơn 0 phút.",
         variant: "destructive",
       })
       return
@@ -245,7 +280,6 @@ export default function EditWorkoutPage() {
       // Tính tổng số set
       const totalSets = exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0)
 
-      // Chuẩn bị dữ liệu buổi tập
       const workoutData = {
         name: workoutName,
         date: workoutDate.toISOString(),
@@ -253,6 +287,7 @@ export default function EditWorkoutPage() {
         categories: categories,
         exercises: exercises.map(({ name, sets }) => ({ name, sets })),
         totalSets,
+        duration: workoutDuration, // Lưu duration
         notes,
       }
 
@@ -335,6 +370,27 @@ export default function EditWorkoutPage() {
                 />
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className="grid gap-3">
+            <Label htmlFor="workout-duration">Thời lượng tập (phút)</Label>
+            <div className="relative">
+              <Timer className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="workout-duration"
+                type="number"
+                min="1"
+                max="300"
+                value={workoutDuration}
+                onChange={handleDurationChange}
+                className="pl-10"
+                placeholder="Nhập thời lượng tập"
+                required
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Hiện tại: {workoutDuration} phút
+            </p>
           </div>
 
           <div className="grid gap-3">

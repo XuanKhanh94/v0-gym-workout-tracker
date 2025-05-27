@@ -4,13 +4,13 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { ChevronLeft, Plus, Trash2, CalendarIcon } from "lucide-react"
+import { ChevronLeft, Plus, Trash2, CalendarIcon, Timer } from "lucide-react"
 import { addWorkout, getExerciseLibrary } from "@/lib/firebase-service"
 import { useToast } from "@/hooks/use-toast"
 import type { Exercise } from "@/lib/types"
@@ -23,11 +23,13 @@ import { cn } from "@/lib/utils"
 
 export default function NewWorkoutPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   const { user } = useAuth()
   const [workoutName, setWorkoutName] = useState("")
   const [categories, setCategories] = useState<string[]>([])
-  const [workoutDate, setWorkoutDate] = useState<Date>(new Date()) // Thêm state cho ngày tập
+  const [workoutDate, setWorkoutDate] = useState<Date>(new Date())
+  const [workoutDuration, setWorkoutDuration] = useState<number>(60) // Thời lượng tập tính bằng phút
   const [notes, setNotes] = useState("")
   const [exercises, setExercises] = useState<
     Array<{
@@ -45,6 +47,12 @@ export default function NewWorkoutPage() {
   const [showSuggestionsMap, setShowSuggestionsMap] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
+    // Lấy ngày từ URL params nếu có
+    const dateParam = searchParams.get("date")
+    if (dateParam) {
+      setWorkoutDate(new Date(dateParam))
+    }
+
     const fetchExerciseLibrary = async () => {
       try {
         setLibraryLoading(true)
@@ -60,7 +68,7 @@ export default function NewWorkoutPage() {
     }
 
     fetchExerciseLibrary()
-  }, [])
+  }, [searchParams])
 
   const addExercise = () => {
     const newExercise = {
@@ -130,6 +138,24 @@ export default function NewWorkoutPage() {
     }
   }
 
+  // Xử lý thay đổi thời lượng tập
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+
+    // Nếu input trống, set về 0
+    if (value === "" || value === null || value === undefined) {
+      setWorkoutDuration("")
+      return
+    }
+
+    const numValue = Number(value)
+
+    // Kiểm tra giá trị hợp lệ
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 300) {
+      setWorkoutDuration(numValue)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -150,6 +176,17 @@ export default function NewWorkoutPage() {
       toast({
         title: "Thiếu thông tin",
         description: "Vui lòng điền đầy đủ thông tin buổi tập và thêm ít nhất một bài tập.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Kiểm tra thời lượng tập
+    if (workoutDuration <= 0) {
+      setError("Thời lượng tập phải lớn hơn 0 phút")
+      toast({
+        title: "Thời lượng không hợp lệ",
+        description: "Thời lượng tập phải lớn hơn 0 phút.",
         variant: "destructive",
       })
       return
@@ -184,12 +221,12 @@ export default function NewWorkoutPage() {
 
       const workoutData = {
         name: workoutName,
-        date: workoutDate.toISOString(), // Sử dụng ngày được chọn
-        category: categories.join(", "), // Join categories thành string để tương thích
-        categories: categories, // Lưu thêm array categories
+        date: workoutDate.toISOString(),
+        category: categories.join(", "),
+        categories: categories,
         exercises: exercises.map(({ name, sets }) => ({ name, sets })),
         totalSets,
-        duration: 60,
+        duration: workoutDuration, // Sử dụng workoutDuration
         notes,
       }
 
@@ -301,6 +338,27 @@ export default function NewWorkoutPage() {
                 />
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className="grid gap-3">
+            <Label htmlFor="workout-duration">Thời lượng tập (phút)</Label>
+            <div className="relative">
+              <Timer className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="workout-duration"
+                type="number"
+                min="1"
+                max="300"
+                value={workoutDuration}
+                onChange={handleDurationChange}
+                className="pl-10"
+                placeholder="Nhập thời lượng tập"
+                required
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Hiện tại: {workoutDuration} phút
+            </p>
           </div>
 
           <div className="grid gap-3">

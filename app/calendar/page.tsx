@@ -6,41 +6,19 @@ import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { getWorkouts, addWorkout } from "@/lib/firebase-service"
+import { getWorkouts } from "@/lib/firebase-service"
 import Link from "next/link"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/hooks/use-toast"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useAuth } from "@/lib/auth-context"
 import type { Workout } from "@/lib/types"
-
-interface NewWorkoutForm {
-  name: string
-  categories: string[]
-  duration: string
-  notes: string
-  exercises: any[]
-}
 
 export default function CalendarPage() {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedWorkouts, setSelectedWorkouts] = useState<Workout[]>([])
-  const [isAddWorkoutOpen, setIsAddWorkoutOpen] = useState(false)
-  const [newWorkout, setNewWorkout] = useState<NewWorkoutForm>({
-    name: "",
-    categories: [],
-    duration: "",
-    notes: "",
-    exercises: [],
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { user } = useAuth()
 
@@ -81,97 +59,6 @@ export default function CalendarPage() {
     }
   }, [selectedDate, workouts])
 
-  const resetForm = () => {
-    setNewWorkout({
-      name: "",
-      categories: [],
-      duration: "",
-      notes: "",
-      exercises: [],
-    })
-  }
-
-  const handleCategoryChange = (category: string, checked: boolean) => {
-    if (checked) {
-      setNewWorkout((prev) => ({
-        ...prev,
-        categories: [...prev.categories, category],
-      }))
-    } else {
-      setNewWorkout((prev) => ({
-        ...prev,
-        categories: prev.categories.filter((c) => c !== category),
-      }))
-    }
-  }
-
-  const handleAddWorkout = async () => {
-    if (!user) {
-      toast({
-        title: "Lỗi",
-        description: "Bạn cần đăng nhập để thêm buổi tập",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (!selectedDate || !newWorkout.name || newWorkout.categories.length === 0) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
-      const workoutData = {
-        name: newWorkout.name,
-        category: newWorkout.categories.join(", "),
-        categories: newWorkout.categories,
-        date: selectedDate.toISOString(),
-        duration: Number.parseInt(newWorkout.duration) || 0,
-        notes: newWorkout.notes,
-        exercises: [],
-        totalSets: 0,
-      }
-
-      await addWorkout(workoutData)
-
-      // Refresh workouts list
-      const updatedWorkouts = await getWorkouts()
-      setWorkouts(updatedWorkouts)
-
-      // Reset form and close dialog
-      resetForm()
-      setIsAddWorkoutOpen(false)
-
-      // Update selected workouts for the current date
-      const workoutsOnDate = updatedWorkouts.filter((workout: Workout) => {
-        const workoutDate = new Date(workout.date)
-        return isSameDay(workoutDate, selectedDate)
-      })
-      setSelectedWorkouts(workoutsOnDate)
-
-      toast({
-        title: "Thành công",
-        description: "Đã thêm buổi tập mới",
-      })
-    } catch (error) {
-      console.error("Error adding workout:", error)
-      toast({
-        title: "Lỗi",
-        description: "Không thể thêm buổi tập. Vui lòng thử lại.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const categories = ["Ngực", "Lưng", "Vai", "Tay trước", "Tay sau", "Chân", "Bụng", "Cardio", "Full Body"]
-
   return (
     <div className="container mx-auto py-10">
       <Card>
@@ -206,92 +93,15 @@ export default function CalendarPage() {
               <p className="text-muted-foreground mb-4">Không có buổi tập nào vào ngày này</p>
               <div className="space-y-2">
                 {canAddWorkout ? (
-                  <Dialog open={isAddWorkoutOpen} onOpenChange={setIsAddWorkoutOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Thêm buổi tập
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                        <DialogTitle>Thêm buổi tập mới</DialogTitle>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="workout-name">Tên buổi tập *</Label>
-                          <Input
-                            id="workout-name"
-                            value={newWorkout.name}
-                            onChange={(e) => setNewWorkout((prev) => ({ ...prev, name: e.target.value }))}
-                            placeholder="Ví dụ: Tập ngực và vai"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Loại tập * (có thể chọn nhiều)</Label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {categories.map((category) => (
-                              <div key={category} className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  id={`category-${category}`}
-                                  checked={newWorkout.categories.includes(category)}
-                                  onChange={(e) => handleCategoryChange(category, e.target.checked)}
-                                  className="rounded border-gray-300"
-                                />
-                                <Label htmlFor={`category-${category}`} className="text-sm font-normal cursor-pointer">
-                                  {category}
-                                </Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="workout-duration">Thời gian (phút)</Label>
-                          <Input
-                            id="workout-duration"
-                            type="number"
-                            value={newWorkout.duration}
-                            onChange={(e) => setNewWorkout((prev) => ({ ...prev, duration: e.target.value }))}
-                            placeholder="60"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="workout-notes">Ghi chú</Label>
-                          <Textarea
-                            id="workout-notes"
-                            value={newWorkout.notes}
-                            onChange={(e) => setNewWorkout((prev) => ({ ...prev, notes: e.target.value }))}
-                            placeholder="Ghi chú về buổi tập..."
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            resetForm()
-                            setIsAddWorkoutOpen(false)
-                          }}
-                          disabled={isSubmitting}
-                        >
-                          Hủy
-                        </Button>
-                        <Button onClick={handleAddWorkout} disabled={isSubmitting}>
-                          {isSubmitting ? "Đang thêm..." : "Thêm buổi tập"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Link href={`/workouts/new?date=${selectedDate.toISOString()}`}>
+                    <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Thêm buổi tập
+                    </Button>
+                  </Link>
                 ) : (
                   <p className="text-muted-foreground text-sm">Không thể thêm buổi tập cho ngày đã qua</p>
                 )}
-                <Link href="/workouts/new">
-                  <Button variant="outline" className="w-full">
-                    Tạo buổi tập chi tiết
-                  </Button>
-                </Link>
               </div>
             </div>
           ) : (
@@ -299,86 +109,11 @@ export default function CalendarPage() {
               <div className="flex justify-between items-center">
                 <h4 className="font-medium">Buổi tập trong ngày</h4>
                 {canAddWorkout ? (
-                  <Dialog open={isAddWorkoutOpen} onOpenChange={setIsAddWorkoutOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
-                        <PlusCircle className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                        <DialogTitle>Thêm buổi tập mới</DialogTitle>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="workout-name-2">Tên buổi tập *</Label>
-                          <Input
-                            id="workout-name-2"
-                            value={newWorkout.name}
-                            onChange={(e) => setNewWorkout((prev) => ({ ...prev, name: e.target.value }))}
-                            placeholder="Ví dụ: Tập ngực và vai"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Loại tập * (có thể chọn nhiều)</Label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {categories.map((category) => (
-                              <div key={category} className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  id={`category-2-${category}`}
-                                  checked={newWorkout.categories.includes(category)}
-                                  onChange={(e) => handleCategoryChange(category, e.target.checked)}
-                                  className="rounded border-gray-300"
-                                />
-                                <Label
-                                  htmlFor={`category-2-${category}`}
-                                  className="text-sm font-normal cursor-pointer"
-                                >
-                                  {category}
-                                </Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="workout-duration-2">Thời gian (phút)</Label>
-                          <Input
-                            id="workout-duration-2"
-                            type="number"
-                            value={newWorkout.duration}
-                            onChange={(e) => setNewWorkout((prev) => ({ ...prev, duration: e.target.value }))}
-                            placeholder="60"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="workout-notes-2">Ghi chú</Label>
-                          <Textarea
-                            id="workout-notes-2"
-                            value={newWorkout.notes}
-                            onChange={(e) => setNewWorkout((prev) => ({ ...prev, notes: e.target.value }))}
-                            placeholder="Ghi chú về buổi tập..."
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            resetForm()
-                            setIsAddWorkoutOpen(false)
-                          }}
-                          disabled={isSubmitting}
-                        >
-                          Hủy
-                        </Button>
-                        <Button onClick={handleAddWorkout} disabled={isSubmitting}>
-                          {isSubmitting ? "Đang thêm..." : "Thêm buổi tập"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Link href={`/workouts/new?date=${selectedDate.toISOString()}`}>
+                    <Button size="sm" variant="outline">
+                      <PlusCircle className="h-4 w-4" />
+                    </Button>
+                  </Link>
                 ) : null}
               </div>
               {selectedWorkouts.map((workout: Workout) => (
