@@ -11,13 +11,41 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChevronLeft, Plus, Trash2, CalendarIcon } from "lucide-react"
-import { getWorkout, updateWorkout, getExerciseLibrary } from "@/lib/firebase-service"
-import { useToast } from "@/hooks/use-toast"
-import type { Workout, Exercise } from "@/lib/types"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+
+// Firebase imports
+import { getWorkout, updateWorkout, getExerciseLibrary } from "@/lib/firebase-service"
+import { useToast } from "@/hooks/use-toast"
+
+// Local type definitions
+interface Exercise {
+  id: string
+  name: string
+  category: string
+  description?: string
+}
+
+interface WorkoutExercise {
+  name: string
+  sets: Array<{ reps: string; weight: string }>
+}
+
+interface Workout {
+  id: string
+  name: string
+  date?: string
+  category?: string
+  categories?: string[]
+  exercises: WorkoutExercise[]
+  totalSets: number
+  notes?: string
+  userId: string
+  createdAt: string
+  updatedAt: string
+}
 
 export default function EditWorkoutPage() {
   const params = useParams()
@@ -26,7 +54,7 @@ export default function EditWorkoutPage() {
   const [workout, setWorkout] = useState<Workout | null>(null)
   const [workoutName, setWorkoutName] = useState("")
   const [categories, setCategories] = useState<string[]>([])
-  const [workoutDate, setWorkoutDate] = useState<Date>(new Date()) // Thêm state cho ngày tập
+  const [workoutDate, setWorkoutDate] = useState<Date>(new Date())
   const [notes, setNotes] = useState("")
   const [exercises, setExercises] = useState<
     Array<{
@@ -43,51 +71,63 @@ export default function EditWorkoutPage() {
   useEffect(() => {
     const fetchData = async () => {
       if (params.id) {
-        // Lấy thông tin buổi tập
-        const workoutData = await getWorkout(params.id as string)
-        if (workoutData) {
-          setWorkout(workoutData)
-          setWorkoutName(workoutData.name)
+        try {
+          // Lấy thông tin buổi tập
+          const workoutData = await getWorkout(params.id as string)
+          if (workoutData) {
+            setWorkout(workoutData)
+            setWorkoutName(workoutData.name || "")
 
-          // Set ngày tập từ dữ liệu
-          if (workoutData.date) {
-            setWorkoutDate(new Date(workoutData.date))
-          }
+            // Set ngày tập từ dữ liệu
+            if (workoutData.date) {
+              setWorkoutDate(new Date(workoutData.date))
+            }
 
-          // Xử lý categories - có thể là string hoặc array
-          if (workoutData.categories && Array.isArray(workoutData.categories)) {
-            setCategories(workoutData.categories)
-          } else if (workoutData.category) {
-            // Nếu chỉ có category string, split thành array
-            setCategories(workoutData.category.split(", ").filter((c) => c.trim()))
+            // Xử lý categories - có thể là string hoặc array
+            if (workoutData.categories && Array.isArray(workoutData.categories)) {
+              setCategories(workoutData.categories)
+            } else if (workoutData.category) {
+              // Nếu chỉ có category string, split thành array
+              setCategories(workoutData.category.split(", ").filter((c) => c.trim()))
+            } else {
+              setCategories([])
+            }
+
+            setNotes(workoutData.notes || "")
+
+            // Chuyển đổi định dạng exercises từ workout để phù hợp với state
+            const formattedExercises = (workoutData.exercises || []).map((exercise, index) => ({
+              id: `existing-${index}`,
+              name: exercise.name || "",
+              sets: (exercise.sets || []).map((set) => ({
+                reps: set.reps || "",
+                weight: set.weight || "",
+              })),
+            }))
+
+            setExercises(formattedExercises)
           } else {
-            setCategories([])
+            toast({
+              title: "Lỗi",
+              description: "Không tìm thấy buổi tập.",
+              variant: "destructive",
+            })
+            router.push("/workouts")
           }
 
-          setNotes(workoutData.notes || "")
-
-          // Chuyển đổi định dạng exercises từ workout để phù hợp với state
-          const formattedExercises = workoutData.exercises.map((exercise, index) => ({
-            id: `existing-${index}`,
-            name: exercise.name,
-            sets: exercise.sets.map((set) => ({ reps: set.reps, weight: set.weight })),
-          }))
-
-          setExercises(formattedExercises)
-        } else {
+          // Lấy thư viện bài tập
+          const libraryData = await getExerciseLibrary()
+          setExerciseLibrary(libraryData || [])
+        } catch (error) {
+          console.error("Error fetching data:", error)
           toast({
             title: "Lỗi",
-            description: "Không tìm thấy buổi tập.",
+            description: "Không thể tải dữ liệu buổi tập.",
             variant: "destructive",
           })
-          router.push("/workouts")
+        } finally {
+          setIsLoading(false)
         }
-
-        // Lấy thư viện bài tập
-        const libraryData = await getExerciseLibrary()
-        setExerciseLibrary(libraryData)
-
-        setIsLoading(false)
       }
     }
 
@@ -109,16 +149,16 @@ export default function EditWorkoutPage() {
 
   const updateExerciseName = (id: string, name: string) => {
     setExercises(exercises.map((exercise) => (exercise.id === id ? { ...exercise, name } : exercise)))
-    setShowSuggestionsMap((prev) => ({ ...prev, [id]: true })) // gõ chữ thì show gợi ý
+    setShowSuggestionsMap((prev) => ({ ...prev, [id]: true }))
   }
 
   const handleSelectExerciseName = (exerciseId: string, name: string) => {
     updateExerciseName(exerciseId, name)
-    setShowSuggestionsMap((prev) => ({ ...prev, [exerciseId]: false })) // chọn xong ẩn gợi ý
+    setShowSuggestionsMap((prev) => ({ ...prev, [exerciseId]: false }))
   }
 
   const handleInputFocus = (exerciseId: string) => {
-    setShowSuggestionsMap((prev) => ({ ...prev, [exerciseId]: true })) // focus input show gợi ý
+    setShowSuggestionsMap((prev) => ({ ...prev, [exerciseId]: true }))
   }
 
   const addSet = (exerciseId: string) => {
@@ -163,7 +203,7 @@ export default function EditWorkoutPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     if (!workout) return
@@ -208,9 +248,9 @@ export default function EditWorkoutPage() {
       // Chuẩn bị dữ liệu buổi tập
       const workoutData = {
         name: workoutName,
-        date: workoutDate.toISOString(), // Cập nhật ngày tập
-        category: categories.join(", "), // Join categories thành string để tương thích
-        categories: categories, // Lưu thêm array categories
+        date: workoutDate.toISOString(),
+        category: categories.join(", "),
+        categories: categories,
         exercises: exercises.map(({ name, sets }) => ({ name, sets })),
         totalSets,
         notes,

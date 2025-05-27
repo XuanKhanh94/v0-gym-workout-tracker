@@ -12,10 +12,24 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChevronLeft } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+
+// Firebase imports
 import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import { useToast } from "@/hooks/use-toast"
-import type { Exercise } from "@/lib/types"
+
+
+// Types
+interface Exercise {
+  id: string
+  name: string
+  muscleGroup: string
+  equipment: string
+  difficulty: string
+  description?: string
+  createdAt: Date
+  updatedAt: Date
+}
 
 export default function EditExercisePage() {
   const params = useParams()
@@ -39,10 +53,10 @@ export default function EditExercisePage() {
 
         if (exerciseSnap.exists()) {
           const data = exerciseSnap.data() as Omit<Exercise, "id">
-          setName(data.name)
-          setMuscleGroup(data.muscleGroup)
-          setEquipment(data.equipment)
-          setDifficulty(data.difficulty)
+          setName(data.name || "")
+          setMuscleGroup(data.muscleGroup || "")
+          setEquipment(data.equipment || "")
+          setDifficulty(data.difficulty || "")
           setDescription(data.description || "")
         } else {
           toast({
@@ -67,7 +81,7 @@ export default function EditExercisePage() {
     fetchExercise()
   }, [params.id, router, toast])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     if (!name || !muscleGroup || !equipment || !difficulty) {
