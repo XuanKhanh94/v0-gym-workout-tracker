@@ -166,7 +166,7 @@ export default function CalendarPage() {
     }
   }
 
-  const categories = ["Ngực", "Lưng", "Vai", "Tay", "Chân", "Bụng", "Cardio", "Full Body"]
+  const categories = ["Ngực", "Lưng", "Vai", "Tay trước", "Tay sau", "Chân", "Bụng", "Cardio", "Full Body"]
 
   return (
     <div className="container mx-auto py-10">

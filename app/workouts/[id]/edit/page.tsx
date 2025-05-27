@@ -40,14 +40,13 @@ export default function EditWorkoutPage() {
       if (params.id) {
         // Lấy thông tin buổi tập
         const workoutData = await getWorkout(params.id as string)
-        console.log("workoutData:", workoutData);
         if (workoutData) {
           setWorkout(workoutData)
           setWorkoutName(workoutData.name)
 
           // Xử lý categories - có thể là string hoặc array
-          if (workoutData.category && Array.isArray(workoutData.category)) {
-            setCategories(workoutData.category)
+          if (workoutData.categories && Array.isArray(workoutData.categories)) {
+            setCategories(workoutData.categories)
           } else if (workoutData.category) {
             // Nếu chỉ có category string, split thành array
             setCategories(workoutData.category.split(", ").filter((c) => c.trim()))
@@ -267,7 +266,7 @@ export default function EditWorkoutPage() {
           <div className="grid gap-3">
             <Label>Phân loại (có thể chọn nhiều)</Label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {["Ngực", "Lưng", "Vai", "Chân", "Tay", "Bụng", "Toàn thân", "Khác"].map((category) => (
+              {["Ngực", "Lưng", "Vai", "Chân", "Tay trước", "Tay sau", "Bụng", "Toàn thân"].map((category) => (
                 <div key={category} className="flex items-center space-x-2">
                   <input
                     type="checkbox"

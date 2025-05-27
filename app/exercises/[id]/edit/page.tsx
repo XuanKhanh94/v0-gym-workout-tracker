@@ -160,7 +160,8 @@ export default function EditExercisePage() {
                   <SelectItem value="Lưng">Lưng</SelectItem>
                   <SelectItem value="Vai">Vai</SelectItem>
                   <SelectItem value="Chân">Chân</SelectItem>
-                  <SelectItem value="Tay">Tay</SelectItem>
+                  <SelectItem value="Tay trước">Tay trước</SelectItem>
+                  <SelectItem value="Tay sau">Tay sau</SelectItem>
                   <SelectItem value="Bụng">Bụng</SelectItem>
                   <SelectItem value="Toàn thân">Toàn thân</SelectItem>
                 </SelectContent>

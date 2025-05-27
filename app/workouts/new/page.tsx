@@ -278,7 +278,7 @@ export default function NewWorkoutPage() {
           <div className="grid gap-3">
             <Label>Phân loại (có thể chọn nhiều)</Label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {["Ngực", "Lưng", "Vai", "Chân", "Tay", "Bụng", "Toàn thân", "Khác"].map((category) => (
+              {["Ngực", "Lưng", "Vai", "Chân", "Tay trước", "Tay sau", "Bụng", "Toàn thân"].map((category) => (
                 <div key={category} className="flex items-center space-x-2">
                   <input
                     type="checkbox"

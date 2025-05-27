@@ -135,49 +135,93 @@ export const exerciseData: Omit<Exercise, "id">[] = [
     description: "Biến thể của deadlift với tay nắm rộng hơn, tập trung nhiều hơn vào lưng trên.",
   },
 
-  // Nhóm cơ Tay
-  {
-    name: "Đẩy tay sau bằng cáp (Triceps Pushdown)",
-    muscleGroup: "Tay",
-    equipment: "Cable",
-    difficulty: "Dễ",
-    description: "Bài tập cơ bản cho cơ tay sau. Đẩy dây cáp xuống dưới bằng lực từ tay sau.",
-  },
+  // Nhóm cơ Tay trước (Biceps)
   {
     name: "Cuốn tạ đơn",
-    muscleGroup: "Tay",
+    muscleGroup: "Tay trước",
     equipment: "Dumbbell",
     difficulty: "Dễ",
     description: "Bài tập cơ bản cho cơ tay trước. Cuốn tạ đơn lên bằng cách gập khuỷu tay.",
   },
   {
     name: "Cuốn tạ búa",
-    muscleGroup: "Tay",
+    muscleGroup: "Tay trước",
     equipment: "Dumbbell",
     difficulty: "Dễ",
     description: "Biến thể của cuốn tạ đơn với tư thế cầm tạ như cầm búa, tập trung vào cơ cẳng tay và tay trước.",
   },
   {
-    name: "Duỗi tay sau với tạ đơn",
-    muscleGroup: "Tay",
-    equipment: "Dumbbell",
-    difficulty: "Trung bình",
-    description: "Tập trung vào cơ tay sau. Nâng tạ đơn lên trên đầu và duỗi cánh tay.",
-  },
-  {
     name: "Cuốn tạ đòn",
-    muscleGroup: "Tay",
+    muscleGroup: "Tay trước",
     equipment: "Barbell",
     difficulty: "Trung bình",
     description: "Bài tập hiệu quả cho cơ tay trước. Cuốn tạ đòn lên bằng cách gập khuỷu tay.",
   },
   {
     name: "Cuốn tạ đơn cô lập",
-    muscleGroup: "Tay",
+    muscleGroup: "Tay trước",
     equipment: "Dumbbell",
     difficulty: "Trung bình",
     description:
       "Bài tập tập trung vào cơ tay trước. Thực hiện với một tay tì lên đùi hoặc ghế để cô lập cơ tay trước.",
+  },
+  {
+    name: "Cuốn tạ cáp",
+    muscleGroup: "Tay trước",
+    equipment: "Cable",
+    difficulty: "Dễ",
+    description: "Bài tập tay trước sử dụng máy cáp, giúp duy trì lực căng đều trong suốt chuyển động.",
+  },
+  {
+    name: "Cuốn tạ 21s",
+    muscleGroup: "Tay trước",
+    equipment: "Barbell",
+    difficulty: "Khó",
+    description: "Bài tập nâng cao: 7 reps nửa dưới + 7 reps nửa trên + 7 reps full range.",
+  },
+
+  // Nhóm cơ Tay sau (Triceps)
+  {
+    name: "Đẩy tay sau bằng cáp (Triceps Pushdown)",
+    muscleGroup: "Tay sau",
+    equipment: "Cable",
+    difficulty: "Dễ",
+    description: "Bài tập cơ bản cho cơ tay sau. Đẩy dây cáp xuống dưới bằng lực từ tay sau.",
+  },
+  {
+    name: "Duỗi tay sau với tạ đơn",
+    muscleGroup: "Tay sau",
+    equipment: "Dumbbell",
+    difficulty: "Trung bình",
+    description: "Tập trung vào cơ tay sau. Nâng tạ đơn lên trên đầu và duỗi cánh tay.",
+  },
+  {
+    name: "Chống đẩy kim cương",
+    muscleGroup: "Tay sau",
+    equipment: "Bodyweight",
+    difficulty: "Khó",
+    description: "Biến thể chống đẩy với tay tạo hình kim cương, tập trung vào tay sau.",
+  },
+  {
+    name: "Duỗi tay sau trên ghế",
+    muscleGroup: "Tay sau",
+    equipment: "Bodyweight",
+    difficulty: "Trung bình",
+    description: "Bài tập tay sau sử dụng ghế, hạ người xuống và đẩy lên bằng lực tay sau.",
+  },
+  {
+    name: "Đẩy tay sau với tạ đòn nằm",
+    muscleGroup: "Tay sau",
+    equipment: "Barbell",
+    difficulty: "Trung bình",
+    description: "Nằm trên ghế, giữ tạ đòn và duỗi tay từ vị trí gập khuỷu tay.",
+  },
+  {
+    name: "Duỗi tay sau một tay",
+    muscleGroup: "Tay sau",
+    equipment: "Dumbbell",
+    difficulty: "Trung bình",
+    description: "Bài tập cô lập tay sau, thực hiện từng tay một để tập trung tối đa.",
   },
 
   // Nhóm cơ Chân
