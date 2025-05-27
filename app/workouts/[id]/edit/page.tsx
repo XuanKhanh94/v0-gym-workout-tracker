@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChevronLeft, Plus, Trash2 } from "lucide-react"
 import { getWorkout, updateWorkout, getExerciseLibrary } from "@/lib/firebase-service"
@@ -22,7 +21,7 @@ export default function EditWorkoutPage() {
   const { toast } = useToast()
   const [workout, setWorkout] = useState<Workout | null>(null)
   const [workoutName, setWorkoutName] = useState("")
-  const [category, setCategory] = useState("")
+  const [categories, setCategories] = useState<string[]>([]) // Thay đổi từ category thành categories
   const [notes, setNotes] = useState("")
   const [exercises, setExercises] = useState<
     Array<{
@@ -41,10 +40,21 @@ export default function EditWorkoutPage() {
       if (params.id) {
         // Lấy thông tin buổi tập
         const workoutData = await getWorkout(params.id as string)
+        console.log("workoutData:", workoutData);
         if (workoutData) {
           setWorkout(workoutData)
           setWorkoutName(workoutData.name)
-          setCategory(workoutData.category)
+
+          // Xử lý categories - có thể là string hoặc array
+          if (workoutData.category && Array.isArray(workoutData.category)) {
+            setCategories(workoutData.category)
+          } else if (workoutData.category) {
+            // Nếu chỉ có category string, split thành array
+            setCategories(workoutData.category.split(", ").filter((c) => c.trim()))
+          } else {
+            setCategories([])
+          }
+
           setNotes(workoutData.notes || "")
 
           // Chuyển đổi định dạng exercises từ workout để phù hợp với state
@@ -136,12 +146,20 @@ export default function EditWorkoutPage() {
     )
   }
 
+  const handleCategoryChange = (category: string, checked: boolean) => {
+    if (checked) {
+      setCategories((prev) => [...prev, category])
+    } else {
+      setCategories((prev) => prev.filter((c) => c !== category))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!workout) return
 
-    if (!workoutName || !category || exercises.length === 0) {
+    if (!workoutName || categories.length === 0 || exercises.length === 0) {
       toast({
         title: "Thiếu thông tin",
         description: "Vui lòng điền đầy đủ thông tin buổi tập và thêm ít nhất một bài tập.",
@@ -181,7 +199,8 @@ export default function EditWorkoutPage() {
       // Chuẩn bị dữ liệu buổi tập
       const workoutData = {
         name: workoutName,
-        category,
+        category: categories.join(", "), // Join categories thành string để tương thích
+        categories: categories, // Lưu thêm array categories
         exercises: exercises.map(({ name, sets }) => ({ name, sets })),
         totalSets,
         notes,
@@ -246,22 +265,32 @@ export default function EditWorkoutPage() {
           </div>
 
           <div className="grid gap-3">
-            <Label htmlFor="category">Phân loại</Label>
-            <Select value={category} onValueChange={setCategory} required>
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Chọn phân loại" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Ngực">Ngực</SelectItem>
-                <SelectItem value="Lưng">Lưng</SelectItem>
-                <SelectItem value="Vai">Vai</SelectItem>
-                <SelectItem value="Chân">Chân</SelectItem>
-                <SelectItem value="Tay">Tay</SelectItem>
-                <SelectItem value="Bụng">Bụng</SelectItem>
-                <SelectItem value="Toàn thân">Toàn thân</SelectItem>
-                <SelectItem value="Khác">Khác</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Phân loại (có thể chọn nhiều)</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {["Ngực", "Lưng", "Vai", "Chân", "Tay", "Bụng", "Toàn thân", "Khác"].map((category) => (
+                <div key={category} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`edit-category-${category}`}
+                    checked={categories.includes(category)}
+                    onChange={(e) => handleCategoryChange(category, e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor={`edit-category-${category}`} className="text-sm font-normal cursor-pointer">
+                    {category}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {categories.map((category) => (
+                  <span key={category} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                    {category}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid gap-3">
@@ -317,14 +346,12 @@ export default function EditWorkoutPage() {
                           {showSuggestionsMap[exercise.id] && exercise.name.trim() && (
                             <div className="absolute z-10 bottom-full mb-1 w-full bg-white border border-gray-200 rounded shadow-md max-h-48 overflow-auto">
                               {exerciseLibrary.filter((ex) =>
-                                ex.name.toLowerCase().includes(exercise.name.toLowerCase())
+                                ex.name.toLowerCase().includes(exercise.name.toLowerCase()),
                               ).length === 0 ? (
                                 <div className="px-4 py-2 text-muted-foreground">Bài tập không tìm thấy</div>
                               ) : (
                                 exerciseLibrary
-                                  .filter((ex) =>
-                                    ex.name.toLowerCase().includes(exercise.name.toLowerCase())
-                                  )
+                                  .filter((ex) => ex.name.toLowerCase().includes(exercise.name.toLowerCase()))
                                   .map((ex) => (
                                     <div
                                       key={ex.id}

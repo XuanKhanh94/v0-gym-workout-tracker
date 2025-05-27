@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { formatDistanceToNow, isValid, parseISO } from "date-fns"
+import { formatDistanceToNow, isValid, parseISO, format, isToday, isFuture } from "date-fns"
 import { vi } from "date-fns/locale"
 import { Dumbbell } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -122,12 +122,20 @@ export default function WorkoutList({ workouts, limit, loading = false }: Workou
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-medium">{workout.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(workoutDate, { addSuffix: true, locale: vi })}
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">{format(workoutDate, "dd/MM/yyyy")}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {isToday(workoutDate)
+                          ? "Hôm nay"
+                          : isFuture(workoutDate)
+                            ? `Còn ${formatDistanceToNow(workoutDate, { locale: vi })}`
+                            : `Đã tập ${formatDistanceToNow(workoutDate, { addSuffix: true, locale: vi })}`}
+                      </p>
+                    </div>
                     <div className="flex flex-wrap gap-2 mt-2">
                       <Badge variant="outline">{workout.exercises?.length || 0} bài tập</Badge>
                       <Badge variant="outline">{workout.totalSets || 0} sets</Badge>
+                      {workout.duration && <Badge variant="outline">{workout.duration} phút</Badge>}
                     </div>
                   </div>
                   <Badge>{workout.category}</Badge>
