@@ -12,10 +12,23 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChevronLeft } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+
+// Firebase imports
 import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import { useToast } from "@/hooks/use-toast"
-import type { Exercise } from "@/lib/types"
+
+// Types
+interface Exercise {
+  id: string
+  name: string
+  muscleGroup: string
+  equipment: string
+  difficulty: string
+  description?: string
+  createdAt: Date
+  updatedAt: Date
+}
 
 export default function EditExercisePage() {
   const params = useParams()
@@ -39,10 +52,10 @@ export default function EditExercisePage() {
 
         if (exerciseSnap.exists()) {
           const data = exerciseSnap.data() as Omit<Exercise, "id">
-          setName(data.name)
-          setMuscleGroup(data.muscleGroup)
-          setEquipment(data.equipment)
-          setDifficulty(data.difficulty)
+          setName(data.name || "")
+          setMuscleGroup(data.muscleGroup || "")
+          setEquipment(data.equipment || "")
+          setDifficulty(data.difficulty || "")
           setDescription(data.description || "")
         } else {
           toast({
@@ -67,10 +80,12 @@ export default function EditExercisePage() {
     fetchExercise()
   }, [params.id, router, toast])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    console.log("Form submitted - starting save process")
 
     if (!name || !muscleGroup || !equipment || !difficulty) {
+      console.log("Validation failed - missing required fields")
       toast({
         title: "Thiếu thông tin",
         description: "Vui lòng điền đầy đủ thông tin bài tập.",
@@ -80,8 +95,10 @@ export default function EditExercisePage() {
     }
 
     setSaving(true)
+    console.log("Setting saving state to true")
 
     try {
+      console.log("Starting Firebase update...")
       const exerciseRef = doc(db, "exercises", params.id as string)
 
       await updateDoc(exerciseRef, {
@@ -93,12 +110,37 @@ export default function EditExercisePage() {
         updatedAt: new Date(),
       })
 
+      console.log("Firebase update successful!")
+
       toast({
         title: "Thành công",
         description: "Đã cập nhật bài tập.",
       })
 
-      router.push(`/exercises/${params.id}`)
+      console.log("Toast displayed, attempting redirect...")
+
+      // Try multiple redirect methods
+      try {
+        console.log("Trying router.push...")
+        router.push("/exercises")
+
+        // Fallback with window.location
+        // setTimeout(() => {
+        //   console.log("Fallback redirect with window.location...")
+        //   if (typeof window !== "undefined") {
+        //     window.location.href = "/exercises"
+        //   }
+        // }, 1000)
+        router.push("/exercises")
+
+      } catch (redirectError) {
+        console.error("Router.push failed:", redirectError)
+        // Force redirect with window.location
+        if (typeof window !== "undefined") {
+          console.log("Using window.location as fallback...")
+          window.location.href = "/exercises"
+        }
+      }
     } catch (error) {
       console.error("Lỗi khi cập nhật bài tập:", error)
       toast({
@@ -107,9 +149,11 @@ export default function EditExercisePage() {
         variant: "destructive",
       })
     } finally {
+      console.log("Setting saving state to false")
       setSaving(false)
     }
   }
+
 
   if (loading) {
     return (
