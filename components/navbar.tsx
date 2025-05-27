@@ -31,7 +31,6 @@ export default function Navbar() {
   // Kiểm tra trạng thái admin mỗi khi component được render
   useEffect(() => {
     if (user && !adminLoading && !isAdmin && !hasCheckedAdmin) {
-      console.log(" Tự động kiểm tra quyền admin...")
       checkAdminStatus()
         .catch((err) => console.error(" Lỗi khi kiểm tra quyền admin:", err))
         .finally(() => setHasCheckedAdmin(true))
@@ -90,10 +89,10 @@ export default function Navbar() {
 
   const handleRefreshAdminStatus = async () => {
     try {
-      console.log("🔄 Làm mới trạng thái admin...")
+
       await checkAdminStatus()
     } catch (error) {
-      console.error("❌ Lỗi khi làm mới trạng thái admin:", error)
+      console.error("")
     }
   }
 

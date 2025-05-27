@@ -22,14 +22,9 @@ export default function ExercisesPage() {
       try {
         setLoading(true)
         setError(null)
-        console.log("Đang tải danh sách bài tập...")
-
         const data = await getExerciseLibrary()
-        console.log("Đã tải được", data.length, "bài tập:", data)
-
         setExercises(data)
       } catch (error) {
-        console.error("Lỗi khi tải bài tập:", error)
         setError("Không thể tải danh sách bài tập. Vui lòng thử lại.")
       } finally {
         setLoading(false)
@@ -56,9 +51,6 @@ export default function ExercisesPage() {
     }
     exercisesByMuscleGroup[exercise.muscleGroup].push(exercise)
   })
-
-  console.log("Filtered exercises:", filteredExercises)
-  console.log("Grouped exercises:", exercisesByMuscleGroup)
 
   return (
     <div className="container mx-auto px-4 py-8">

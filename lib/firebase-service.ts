@@ -98,8 +98,6 @@ export async function getWorkouts(): Promise<Workout[]> {
     const q = query(workoutsRef, where("userId", "==", currentUser.uid), orderBy("date", "desc"))
     const querySnapshot = await getDocs(q)
 
-    console.log(`Đã tìm thấy ${querySnapshot.docs.length} buổi tập`)
-
     return querySnapshot.docs.map((doc) => {
       const data = doc.data()
       return {
@@ -193,7 +191,6 @@ export async function addWorkout(workoutData: Omit<Workout, "id">): Promise<stri
       createdAt: serverTimestamp(),
     })
 
-    console.log("Đã thêm buổi tập mới với ID:", docRef.id)
     return docRef.id
   } catch (error) {
     console.error("Lỗi khi thêm buổi tập mới:", error)
@@ -251,8 +248,6 @@ export async function updateWorkout(id: string, workoutData: Partial<Workout>): 
       ...updateData,
       updatedAt: serverTimestamp(),
     })
-
-    console.log("Đã cập nhật buổi tập:", id)
     return true
   } catch (error) {
     console.error("Lỗi khi cập nhật buổi tập:", error)
@@ -263,14 +258,12 @@ export async function updateWorkout(id: string, workoutData: Partial<Workout>): 
 // Xóa buổi tập
 export async function deleteWorkout(id: string): Promise<boolean> {
   if (!isBrowser || !db || !auth) {
-    console.error("Firebase chưa được khởi tạo hoặc không ở môi trường browser")
     return false
   }
 
   try {
     const currentUser = auth.currentUser
     if (!currentUser) {
-      console.error("Người dùng chưa đăng nhập")
       return false
     }
 
@@ -279,20 +272,16 @@ export async function deleteWorkout(id: string): Promise<boolean> {
     const workoutSnap = await getDoc(workoutRef)
 
     if (!workoutSnap.exists()) {
-      console.error("Không tìm thấy buổi tập")
       return false
     }
 
     const workoutData = workoutSnap.data()
     if (workoutData.userId !== currentUser.uid) {
-      console.error("Không có quyền xóa buổi tập này")
       return false
     }
 
     // Xóa buổi tập
     await deleteDoc(workoutRef)
-
-    console.log("Đã xóa buổi tập:", id)
     return true
   } catch (error) {
     console.error("Lỗi khi xóa buổi tập:", error)
@@ -303,16 +292,12 @@ export async function deleteWorkout(id: string): Promise<boolean> {
 // Lấy danh sách bài tập
 export async function getExerciseLibrary(): Promise<Exercise[]> {
   if (!isBrowser || !db) {
-    console.error("Firebase chưa được khởi tạo hoặc không ở môi trường browser")
     return []
   }
 
   try {
     const exercisesRef = collection(db, "exercises")
     const querySnapshot = await getDocs(exercisesRef)
-
-    console.log(`Đã tìm thấy ${querySnapshot.docs.length} bài tập`)
-
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -326,7 +311,7 @@ export async function getExerciseLibrary(): Promise<Exercise[]> {
 // Thêm bài tập mới
 export async function addExercise(exerciseData: Omit<Exercise, "id">): Promise<string | null> {
   if (!isBrowser || !db || !auth) {
-    console.error("Firebase chưa được khởi tạo hoặc không ở môi trường browser")
+
     return null
   }
 
@@ -343,8 +328,6 @@ export async function addExercise(exerciseData: Omit<Exercise, "id">): Promise<s
       createdBy: currentUser.uid,
       createdAt: serverTimestamp(),
     })
-
-    console.log("Đã thêm bài tập mới với ID:", docRef.id)
     return docRef.id
   } catch (error) {
     console.error("Lỗi khi thêm bài tập mới:", error)
@@ -355,7 +338,6 @@ export async function addExercise(exerciseData: Omit<Exercise, "id">): Promise<s
 // Lấy chi tiết bài tập
 export async function getExercise(id: string): Promise<Exercise | null> {
   if (!isBrowser || !db) {
-    console.error("Firebase chưa được khởi tạo hoặc không ở môi trường browser")
     return null
   }
 
@@ -369,7 +351,6 @@ export async function getExercise(id: string): Promise<Exercise | null> {
         ...exerciseSnap.data(),
       } as Exercise
     } else {
-      console.error("Không tìm thấy bài tập")
       return null
     }
   } catch (error) {
@@ -381,14 +362,12 @@ export async function getExercise(id: string): Promise<Exercise | null> {
 // Cập nhật bài tập
 export async function updateExercise(id: string, exerciseData: Partial<Exercise>): Promise<boolean> {
   if (!isBrowser || !db || !auth) {
-    console.error("Firebase chưa được khởi tạo hoặc không ở môi trường browser")
     return false
   }
 
   try {
     const currentUser = auth.currentUser
     if (!currentUser) {
-      console.error("Người dùng chưa đăng nhập")
       return false
     }
 
@@ -399,10 +378,8 @@ export async function updateExercise(id: string, exerciseData: Partial<Exercise>
       updatedAt: serverTimestamp(),
     })
 
-    console.log("Đã cập nhật bài tập:", id)
     return true
   } catch (error) {
-    console.error("Lỗi khi cập nhật bài tập:", error)
     throw error
   }
 }
@@ -410,24 +387,19 @@ export async function updateExercise(id: string, exerciseData: Partial<Exercise>
 // Xóa bài tập
 export async function deleteExercise(id: string): Promise<boolean> {
   if (!isBrowser || !db || !auth) {
-    console.error("Firebase chưa được khởi tạo hoặc không ở môi trường browser")
     return false
   }
 
   try {
     const currentUser = auth.currentUser
     if (!currentUser) {
-      console.error("Người dùng chưa đăng nhập")
       return false
     }
 
     const exerciseRef = doc(db, "exercises", id)
     await deleteDoc(exerciseRef)
-
-    console.log("Đã xóa bài tập:", id)
     return true
   } catch (error) {
-    console.error("Lỗi khi xóa bài tập:", error)
     throw error
   }
 }

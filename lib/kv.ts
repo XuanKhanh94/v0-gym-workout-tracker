@@ -165,28 +165,22 @@ export async function setupFirstAdmin(email: string, forceReset = false): Promis
     if (await isKVAvailable()) {
       // Kiểm tra xem đã có admin nào chưa
       const adminCount = await kv.scard(ADMIN_LIST_KEY)
-      console.log(`Số lượng admin hiện tại: ${adminCount}`)
 
       // Nếu đã có admin và không yêu cầu reset
       if (adminCount > 0 && !forceReset) {
-        console.log("Đã có admin trong hệ thống, không thể thiết lập admin đầu tiên")
         return false
       }
 
       // Nếu yêu cầu reset, xóa danh sách admin cũ
       if (forceReset) {
-        console.log("Đang reset danh sách admin...")
         await kv.del(ADMIN_LIST_KEY)
-        console.log("Đã xóa danh sách admin cũ")
       }
 
       // Lưu email admin đầu tiên để xử lý khi người dùng đăng nhập
       await kv.set("first_admin_email", email)
-      console.log(`Đã thiết lập ${email} làm admin đầu tiên`)
     } else {
       // Fallback sang bộ nhớ
       if (memoryAdmins.size > 0 && !forceReset) {
-        console.log("Đã có admin trong bộ nhớ, không thể thiết lập admin đầu tiên")
         return false
       }
 
@@ -195,7 +189,6 @@ export async function setupFirstAdmin(email: string, forceReset = false): Promis
       }
 
       firstAdminEmail = email
-      console.log(`Đã thiết lập ${email} làm admin đầu tiên (trong bộ nhớ)`)
     }
 
     return true
@@ -295,7 +288,6 @@ export async function resetAdminList(): Promise<boolean> {
     if (await isKVAvailable()) {
       await kv.del(ADMIN_LIST_KEY)
       await kv.del("first_admin_email")
-      console.log("Đã reset danh sách admin và email admin đầu tiên")
     } else {
       // Fallback sang bộ nhớ
       memoryAdmins.clear()
@@ -312,7 +304,6 @@ export async function resetAdminList(): Promise<boolean> {
         }
       })
 
-      console.log("Đã reset danh sách admin và email admin đầu tiên (trong bộ nhớ)")
     }
 
     return true

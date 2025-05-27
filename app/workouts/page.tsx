@@ -28,9 +28,7 @@ export default function WorkoutsPage() {
       setLoading(true)
       setError(null)
 
-      console.log("Đang lấy danh sách buổi tập...")
       const data = await getWorkouts()
-      console.log(`Đã lấy ${data.length} buổi tập:`, data)
 
       setWorkouts(data)
     } catch (error: any) {

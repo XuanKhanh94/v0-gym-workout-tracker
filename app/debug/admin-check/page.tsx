@@ -25,24 +25,19 @@ export default function AdminCheckDebugPage() {
     setError(null)
 
     try {
-      console.log("🔍 Bắt đầu kiểm tra vai trò cho user:", user.uid)
 
       // Lấy vai trò người dùng từ Firestore
       const role = await getUserRole(user.uid)
-      console.log("📋 Vai trò từ Firestore:", role)
       setUserRole(role)
 
       // Kiểm tra quyền admin
       const isAdminResult = await isUserAdmin(user.uid)
-      console.log("✅ Kết quả isUserAdmin:", isAdminResult)
       setAdminCheck(isAdminResult)
 
       // Lấy tất cả vai trò để debug
       const allRoles = await getAllUserRoles()
-      console.log("📊 Tất cả vai trò trong hệ thống:", allRoles)
       setAllUserRoles(allRoles)
     } catch (error: any) {
-      console.error("❌ Lỗi khi kiểm tra vai trò:", error)
       setError(error.message)
     } finally {
       setLoading(false)
@@ -52,11 +47,9 @@ export default function AdminCheckDebugPage() {
   const refreshAdminStatus = async () => {
     setLoading(true)
     try {
-      console.log("🔄 Làm mới trạng thái admin...")
       await checkAdminStatus()
       await checkUserRole() // Cập nhật lại thông tin debug
     } catch (error: any) {
-      console.error("❌ Lỗi khi làm mới trạng thái admin:", error)
       setError(error.message)
     } finally {
       setLoading(false)

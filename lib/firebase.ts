@@ -31,7 +31,6 @@ if (isBrowser) {
     if (typeof window !== "undefined") {
       analytics = getAnalytics(app)
     }
-    console.log("Firebase đã được khởi tạo thành công")
   } catch (error) {
     console.error("Lỗi khi khởi tạo Firebase:", error)
   }

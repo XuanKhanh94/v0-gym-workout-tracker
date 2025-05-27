@@ -57,10 +57,8 @@ export default function NewWorkoutPage() {
       try {
         setLibraryLoading(true)
         const data = await getExerciseLibrary()
-        console.log(`Đã tải ${data.length} bài tập từ thư viện`)
         setExerciseLibrary(data)
       } catch (error: any) {
-        console.error("Lỗi khi lấy thư viện bài tập:", error)
         setError(`Không thể tải thư viện bài tập: ${error.message}`)
       } finally {
         setLibraryLoading(false)
@@ -231,12 +229,10 @@ export default function NewWorkoutPage() {
       }
 
       setDebugInfo(`Đang thêm buổi tập với userId: ${user.uid}`)
-      console.log("Đang thêm buổi tập:", JSON.stringify(workoutData, null, 2))
 
       const workoutId = await addWorkout(workoutData)
 
       if (workoutId) {
-        console.log("Đã thêm buổi tập thành công với id:", workoutId)
         toast({
           title: "Thành công",
           description: "Đã thêm buổi tập mới.",

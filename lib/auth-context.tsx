@@ -38,10 +38,10 @@ const AuthContext = createContext<AuthContextType>({
   adminLoading: true,
   adminCheckCompleted: false,
   adminDebugInfo: null,
-  signUp: async () => {},
-  signIn: async () => {},
-  signInWithGoogle: async () => {},
-  logout: async () => {},
+  signUp: async () => { },
+  signIn: async () => { },
+  signInWithGoogle: async () => { },
+  logout: async () => { },
   checkAdminStatus: async () => false,
 })
 
@@ -58,7 +58,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Kiểm tra quyền admin
   const checkAdminStatus = async (): Promise<boolean> => {
     if (!user) {
-      console.log("❌ Không thể kiểm tra admin: Người dùng chưa đăng nhập")
       setIsAdmin(false)
       setAdminLoading(false)
       setAdminCheckCompleted(true)
@@ -68,16 +67,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       setAdminLoading(true)
-      console.log("🔍 Đang kiểm tra quyền admin cho user:", user.uid, user.email)
-
       // Lấy vai trò người dùng từ Firestore
       const userRole = await getUserRole(user.uid)
-      console.log("📋 Vai trò từ Firestore:", userRole)
-
       // Kiểm tra quyền admin
       const isUserAdminResult = await isUserAdmin(user.uid)
-      console.log("✅ Kết quả kiểm tra admin:", isUserAdminResult)
-
       // Lưu thông tin debug
       const debugInfo = {
         uid: user.uid,
@@ -86,7 +79,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isUserAdminResult,
         timestamp: new Date().toISOString(),
       }
-      console.log("📊 Thông tin debug admin:", debugInfo)
       setAdminDebugInfo(debugInfo)
 
       // Cập nhật trạng thái
@@ -107,7 +99,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return isUserAdminResult
     } catch (error) {
-      console.error("❌ Lỗi khi kiểm tra quyền admin:", error)
       setIsAdmin(false)
       setAdminCheckCompleted(true)
       setAdminDebugInfo({ error: String(error) })
@@ -120,8 +111,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Đảm bảo người dùng có bản ghi vai trò
   const ensureUserRole = async (user: User) => {
     try {
-      console.log("👤 Đang kiểm tra vai trò cho user:", user.uid, user.email)
-
       // Kiểm tra xem người dùng có phải là admin đầu tiên không
       const isFirstAdmin = await checkAndSetupFirstAdmin({
         uid: user.uid,
@@ -131,20 +120,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("Lỗi khi kiểm tra admin đầu tiên:", err)
         return false
       })
-
-      console.log("🔑 Kết quả kiểm tra admin đầu tiên:", isFirstAdmin)
-
       // Kiểm tra xem người dùng đã có vai trò chưa
       const userRole = await getUserRole(user.uid).catch((err) => {
-        console.error("Lỗi khi lấy vai trò người dùng:", err)
         return null
       })
 
-      console.log("📋 Vai trò hiện tại của user:", userRole)
 
       // Nếu chưa có vai trò, tạo vai trò mặc định là user
       if (!userRole) {
-        console.log("➕ Tạo vai trò mặc định 'user' cho:", user.email)
         await setUserRole({
           uid: user.uid,
           email: user.email || "",
@@ -156,10 +139,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Luôn kiểm tra quyền admin sau khi xử lý vai trò
-      console.log("🔄 Bắt đầu kiểm tra quyền admin...")
       await checkAdminStatus()
     } catch (error) {
-      console.error("❌ Lỗi khi đảm bảo vai trò người dùng:", error)
       setAdminCheckCompleted(true)
     }
   }
@@ -171,15 +152,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const savedAdminStatus = localStorage.getItem("gymtracker_admin_status")
         if (savedAdminStatus) {
           const parsed = JSON.parse(savedAdminStatus)
-          console.log("🔄 Khôi phục trạng thái admin từ localStorage:", parsed)
-
           // Chỉ khôi phục nếu email trùng khớp và thời gian không quá 1 giờ
           const storedTime = new Date(parsed.timestamp).getTime()
           const currentTime = new Date().getTime()
           const oneHour = 60 * 60 * 1000
 
           if (parsed.email === user.email && currentTime - storedTime < oneHour) {
-            console.log("✅ Sử dụng trạng thái admin đã lưu:", parsed.isAdmin)
             setIsAdmin(parsed.isAdmin)
           }
         }
@@ -192,9 +170,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Chỉ đăng ký listener khi ở browser và auth đã được khởi tạo
     if (isBrowser && auth) {
-      console.log("Đăng ký auth state listener")
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        console.log("Auth state changed:", user?.email)
         setUser(user)
 
         if (user) {
@@ -270,12 +246,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         prompt: "select_account",
       })
 
-      console.log("Bắt đầu đăng nhập với Google...")
-      console.log("Domain hiện tại:", window.location.hostname)
-
       const result = await signInWithPopup(auth, provider)
-      console.log("Đăng nhập Google thành công:", result.user.email)
-
       return result.user
     } catch (error: any) {
       console.error("Lỗi chi tiết khi đăng nhập bằng Google:", error)
