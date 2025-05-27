@@ -2,7 +2,7 @@
 
 import { CalendarIcon, PlusCircle } from "lucide-react"
 import { format, isSameDay } from "date-fns"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,6 +43,10 @@ export default function CalendarPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { user } = useAuth()
+
+  const workoutDates = useMemo(() => {
+    return workouts.map((workout) => new Date(workout.date))
+  }, [workouts])
 
   const canAddWorkout = selectedDate && selectedDate >= new Date(new Date().setHours(0, 0, 0, 0))
 
@@ -191,6 +195,7 @@ export default function CalendarPage() {
                 selected={date}
                 onSelect={setDate}
                 disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                workoutDates={workoutDates}
                 initialFocus
               />
             </PopoverContent>

@@ -154,8 +154,8 @@ export default function Navbar() {
             </Button>
 
             {isMenuOpen && (
-              <div className="fixed inset-0 top-14 z-50 bg-background">
-                <nav className="flex flex-col gap-2 p-4">
+              <div className="fixed inset-0 top-14 z-50 bg-white border-t">
+                <nav className="flex flex-col gap-2 p-4" style={{ background: "white" }}>
                   {routes.map((route) => (
                     <Link key={route.href} href={route.href} onClick={() => setIsMenuOpen(false)}>
                       <Button variant={route.active ? "default" : "ghost"} className="w-full justify-start">
@@ -181,10 +181,6 @@ export default function Navbar() {
                     </Link>
                   ) : (
                     <span></span>
-                    // <Button variant="ghost" className="w-full justify-start" onClick={handleRefreshAdminStatus}>
-                    //   <RefreshCw className="h-5 w-5 mr-2" />
-                    //   Kiểm tra quyền
-                    // </Button>
                   )}
                   <Button variant="ghost" className="w-full justify-start text-destructive" onClick={handleLogout}>
                     <LogOut className="h-5 w-5 mr-2" />
@@ -216,13 +212,7 @@ export default function Navbar() {
                   <span>Quản trị</span>
                 </Button>
               </Link>
-            ) : (
-              // <Button variant="ghost" className="gap-2" onClick={handleRefreshAdminStatus}>
-              //   <RefreshCw className="h-5 w-5" />
-              //   <span>Kiểm tra quyền</span>
-              // </Button>
-              <span></span>
-            )}
+            ) : null}
           </nav>
         )}
 
@@ -236,30 +226,27 @@ export default function Navbar() {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
+            <DropdownMenuContent align="end" className="bg-white border border-gray-200 shadow-lg">
+              <DropdownMenuLabel className="text-gray-900">Tài khoản</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-200" />
+              <DropdownMenuItem className="text-gray-700 hover:bg-gray-100">
                 <User className="mr-2 h-4 w-4" />
                 Hồ sơ
               </DropdownMenuItem>
               {adminLoading ? (
-                <DropdownMenuItem disabled>
+                <DropdownMenuItem disabled className="text-gray-500">
                   <Shield className="mr-2 h-4 w-4 animate-pulse" />
                   Đang kiểm tra...
                 </DropdownMenuItem>
               ) : isAdmin ? (
                 <Link href="/admin">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem className="text-gray-700 hover:bg-gray-100">
                     <Shield className="mr-2 h-4 w-4" />
                     Quản trị
                   </DropdownMenuItem>
                 </Link>
-              ) : (
-                <p></p>
-
-              )}
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+              ) : null}
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600 hover:bg-red-50">
                 <LogOut className="mr-2 h-4 w-4" />
                 Đăng xuất
               </DropdownMenuItem>

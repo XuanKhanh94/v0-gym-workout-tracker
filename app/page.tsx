@@ -93,14 +93,36 @@ export default function Home() {
 
   // Tạo lịch tập luyện từ dữ liệu thực tế
   const renderWorkoutSchedule = () => {
+    // Tính toán ngày trong tuần hiện tại
+    const getCurrentWeekDates = () => {
+      const today = new Date()
+      const currentDay = today.getDay() // 0 = Chủ nhật, 1 = Thứ hai, ...
+      const monday = new Date(today)
+
+      // Tính ngày thứ hai của tuần hiện tại
+      const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1
+      monday.setDate(today.getDate() - daysFromMonday)
+
+      const weekDates = []
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(monday)
+        date.setDate(monday.getDate() + i)
+        weekDates.push(date)
+      }
+
+      return weekDates
+    }
+
+    const weekDates = getCurrentWeekDates()
+
     const days = [
-      { key: "monday", label: "Thứ Hai" },
-      { key: "tuesday", label: "Thứ Ba" },
-      { key: "wednesday", label: "Thứ Tư" },
-      { key: "thursday", label: "Thứ Năm" },
-      { key: "friday", label: "Thứ Sáu" },
-      { key: "saturday", label: "Thứ Bảy" },
-      { key: "sunday", label: "Chủ Nhật" },
+      { key: "monday", label: "Thứ Hai", dateIndex: 0 },
+      { key: "tuesday", label: "Thứ Ba", dateIndex: 1 },
+      { key: "wednesday", label: "Thứ Tư", dateIndex: 2 },
+      { key: "thursday", label: "Thứ Năm", dateIndex: 3 },
+      { key: "friday", label: "Thứ Sáu", dateIndex: 4 },
+      { key: "saturday", label: "Thứ Bảy", dateIndex: 5 },
+      { key: "sunday", label: "Chủ Nhật", dateIndex: 6 },
     ]
 
     return (
@@ -111,9 +133,16 @@ export default function Home() {
 
           return (
             <div key={day.key} className="bg-muted rounded-lg p-4">
-              <h3 className="font-medium mb-2">
+              <h3 className="font-medium mb-1">
                 {day.label} {mostFrequentCategory ? `- ${mostFrequentCategory}` : ""}
               </h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                {weekDates[day.dateIndex].toLocaleDateString("vi-VN", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
+              </p>
               {dayWorkouts.length > 0 ? (
                 <ul className="space-y-1 text-sm">
                   {getCommonExercises(dayWorkouts).map((exercise, index) => (

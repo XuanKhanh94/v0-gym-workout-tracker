@@ -10,10 +10,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronLeft, Plus, Trash2 } from "lucide-react"
+import { ChevronLeft, Plus, Trash2, CalendarIcon } from "lucide-react"
 import { getWorkout, updateWorkout, getExerciseLibrary } from "@/lib/firebase-service"
 import { useToast } from "@/hooks/use-toast"
 import type { Workout, Exercise } from "@/lib/types"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 export default function EditWorkoutPage() {
   const params = useParams()
@@ -21,7 +25,8 @@ export default function EditWorkoutPage() {
   const { toast } = useToast()
   const [workout, setWorkout] = useState<Workout | null>(null)
   const [workoutName, setWorkoutName] = useState("")
-  const [categories, setCategories] = useState<string[]>([]) // Thay đổi từ category thành categories
+  const [categories, setCategories] = useState<string[]>([])
+  const [workoutDate, setWorkoutDate] = useState<Date>(new Date()) // Thêm state cho ngày tập
   const [notes, setNotes] = useState("")
   const [exercises, setExercises] = useState<
     Array<{
@@ -43,6 +48,11 @@ export default function EditWorkoutPage() {
         if (workoutData) {
           setWorkout(workoutData)
           setWorkoutName(workoutData.name)
+
+          // Set ngày tập từ dữ liệu
+          if (workoutData.date) {
+            setWorkoutDate(new Date(workoutData.date))
+          }
 
           // Xử lý categories - có thể là string hoặc array
           if (workoutData.categories && Array.isArray(workoutData.categories)) {
@@ -198,6 +208,7 @@ export default function EditWorkoutPage() {
       // Chuẩn bị dữ liệu buổi tập
       const workoutData = {
         name: workoutName,
+        date: workoutDate.toISOString(), // Cập nhật ngày tập
         category: categories.join(", "), // Join categories thành string để tương thích
         categories: categories, // Lưu thêm array categories
         exercises: exercises.map(({ name, sets }) => ({ name, sets })),
@@ -261,6 +272,29 @@ export default function EditWorkoutPage() {
               onChange={(e) => setWorkoutName(e.target.value)}
               required
             />
+          </div>
+
+          <div className="grid gap-3">
+            <Label>Ngày tập</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn("w-full justify-start text-left font-normal", !workoutDate && "text-muted-foreground")}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {workoutDate ? format(workoutDate, "dd/MM/yyyy") : <span>Chọn ngày tập</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={workoutDate}
+                  onSelect={(date) => date && setWorkoutDate(date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="grid gap-3">

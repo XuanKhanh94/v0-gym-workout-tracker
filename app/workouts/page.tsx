@@ -16,7 +16,6 @@ export default function WorkoutsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<string | null>(null)
 
   const fetchWorkouts = async () => {
     if (!user) {
@@ -28,16 +27,12 @@ export default function WorkoutsPage() {
     try {
       setLoading(true)
       setError(null)
-      setDebugInfo(null)
 
       console.log("Đang lấy danh sách buổi tập...")
       const data = await getWorkouts()
       console.log(`Đã lấy ${data.length} buổi tập:`, data)
 
       setWorkouts(data)
-
-      // Thêm thông tin debug
-      setDebugInfo(`Đã tìm thấy ${data.length} buổi tập. User ID: ${user.uid}`)
     } catch (error: any) {
       console.error("Lỗi khi lấy danh sách buổi tập:", error)
       setError(`Đã xảy ra lỗi khi lấy danh sách buổi tập: ${error.message}`)
@@ -63,7 +58,7 @@ export default function WorkoutsPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Buổi tập</h1>
-          <p className="text-muted-foreground">Quản lý tất cả buổi tập của bạn</p>
+          <p className="text-muted-foreground">Các buổi tập của bạn: {workouts.length} buổi tập</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
@@ -83,13 +78,6 @@ export default function WorkoutsPage() {
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>Lỗi</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {debugInfo && (
-        <Alert className="mb-4">
-          <AlertTitle>Thông tin debug</AlertTitle>
-          <AlertDescription>{debugInfo}</AlertDescription>
         </Alert>
       )}
 
