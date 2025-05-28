@@ -56,7 +56,7 @@ export function AddSetModal({ onAddSets, currentSetCount }: AddSetModalProps) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button type="button" variant="ghost" size="sm">
-                    <Plus className="h-4 w-4 mr-1" /> Thêm Set
+                    <Plus className="h-4 w-4 mr-1" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-sm">
