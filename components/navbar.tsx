@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
-import { Dumbbell, LayoutDashboard, ListTodo, BarChart3, Menu, X, LogOut, User, Shield, RefreshCw } from "lucide-react"
+import { Dumbbell, LayoutDashboard, ListTodo, BarChart3, Menu, X, LogOut, User, Shield, RefreshCw, HomeIcon } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/lib/auth-context"
@@ -45,8 +45,8 @@ export default function Navbar() {
   const routes = [
     {
       href: "/",
-      label: "Dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
+      label: "Trang Chủ",
+      icon: <HomeIcon className="h-5 w-5" />,
       active: pathname === "/",
     },
     {
