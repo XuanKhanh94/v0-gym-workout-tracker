@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, RefreshCw } from "lucide-react"
+import { PlusCircle, RefreshCw, ImageIcon } from "lucide-react"
 import WorkoutList from "@/components/workout-list"
 import { getWorkouts } from "@/lib/firebase-service"
 import { useAuth } from "@/lib/auth-context"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Upload } from "@/components/ui/upload" // THÊM dòng này
 import type { Workout } from "@/lib/types"
 
 export default function WorkoutsPage() {
@@ -16,6 +17,7 @@ export default function WorkoutsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]) // THÊM
 
   const fetchWorkouts = async () => {
     if (!user) {
@@ -27,9 +29,7 @@ export default function WorkoutsPage() {
     try {
       setLoading(true)
       setError(null)
-
       const data = await getWorkouts()
-
       setWorkouts(data)
     } catch (error: any) {
       console.error("Lỗi khi lấy danh sách buổi tập:", error)
@@ -49,6 +49,11 @@ export default function WorkoutsPage() {
   const handleRefresh = () => {
     setRefreshing(true)
     fetchWorkouts()
+  }
+
+  const handleUpload = (urls: string[]) => {
+    setUploadedUrls(urls)
+    console.log("Ảnh đã upload:", urls)
   }
 
   return (
@@ -71,6 +76,22 @@ export default function WorkoutsPage() {
           </Link>
         </div>
       </div>
+
+      {/* THÊM upload ảnh */}
+      {/* <div className="mb-6">
+        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+          <ImageIcon className="w-5 h-5" />
+          Tải ảnh lên Cloudinary
+        </h2>
+        <Upload multiple accept="image/*" maxFiles={3} onUpload={handleUpload} />
+        {uploadedUrls.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+            {uploadedUrls.map((url, index) => (
+              <img key={index} src={url} alt={`uploaded-${index}`} className="rounded shadow" />
+            ))}
+          </div>
+        )}
+      </div> */}
 
       {error && (
         <Alert variant="destructive" className="mb-4">

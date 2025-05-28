@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { ChevronLeft, Edit, Trash2, Calendar, Clock, CheckCircle, Image as ImageIcon } from "lucide-react"
 import { getWorkout, deleteWorkout, updateWorkout } from "@/lib/firebase-service"
 import { useToast } from "@/hooks/use-toast"
+import { Upload } from "@/components/ui/upload"
 import type { Workout } from "@/lib/types"
 
 // Hàm helper để parse date an toàn
@@ -69,6 +70,7 @@ export default function WorkoutDetailPage() {
   const [updating, setUpdating] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imageUploading, setImageUploading] = useState(false)
+  const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
 
   useEffect(() => {
     const fetchWorkout = async () => {
@@ -91,11 +93,40 @@ export default function WorkoutDetailPage() {
     fetchWorkout()
   }, [params.id, router, toast])
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0])
+  // const handleUpload = (urls: string[]) => {
+  //   setUploadedUrls(urls)
+  //   console.log("Ảnh đã upload:", urls)
+  // }
+  const handleUpload = async (urls: string[]) => {
+    setUploadedUrls(urls)
+    console.log("Ảnh đã upload:", urls)
+
+    if (!workout || urls.length === 0) return
+
+    const imageUrl = urls[0] // chọn ảnh đầu tiên
+
+    const updatedWorkout = {
+      ...workout,
+      imageUrl,
+    }
+
+    const success = await updateWorkout(workout.id, updatedWorkout)
+
+    if (success) {
+      setWorkout(updatedWorkout)
+      toast({
+        title: "Đã lưu ảnh",
+        description: "Ảnh đã được cập nhật cho buổi tập.",
+      })
+    } else {
+      toast({
+        title: "Lỗi",
+        description: "Không thể lưu ảnh vào buổi tập.",
+        variant: "destructive",
+      })
     }
   }
+
 
   const handleCompletedChange = async (completed: boolean) => {
     if (!workout) return
@@ -261,21 +292,16 @@ export default function WorkoutDetailPage() {
             </label>
           </div>
           {!isCompleted && (
-            <div className="mt-4">
-              <label htmlFor="image-upload" className="text-sm font-medium">
-                Tải lên hình ảnh (tùy chọn):
-              </label>
-              <div className="flex items-center gap-2 mt-2">
-                <Input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  disabled={updating || imageUploading}
-                  className="max-w-xs"
-                />
-                {imageUploading && <span className="text-sm text-muted-foreground">Đang tải lên...</span>}
-              </div>
+
+            <div className="mb-6">
+              <Upload multiple accept="image/*" maxFiles={3} onUpload={handleUpload} />
+              {uploadedUrls.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                  {uploadedUrls.map((url, index) => (
+                    <img key={index} src={url} alt={`uploaded-${index}`} className="rounded shadow" />
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {isCompleted && workout.completedAt && (
@@ -289,7 +315,7 @@ export default function WorkoutDetailPage() {
               <img
                 src={workout.imageUrl}
                 alt="Hình ảnh buổi tập"
-                className="max-w-md w-full h-auto rounded-md"
+                className="rounded-md w-full max-w-xs object-cover"
               />
             </div>
           )}
