@@ -131,7 +131,6 @@ export default function EditWorkoutPage() {
           const libraryData = await getExerciseLibrary()
           setExerciseLibrary(libraryData || [])
         } catch (error) {
-          console.error("Error fetching data:", error)
           toast({
             title: "Lỗi",
             description: "Không thể tải dữ liệu buổi tập.",
@@ -313,35 +312,25 @@ export default function EditWorkoutPage() {
         notes,
       }
 
-      console.log("Form submitted - starting save process")
-      console.log("Setting saving state to true")
-      console.log("Starting Firebase update...")
-
       // Cập nhật buổi tập trong Firestore
       const success = await updateWorkout(workout.id, workoutData)
 
       if (success) {
-        console.log("Firebase update successful!")
         toast({
           title: "Thành công",
           description: "Đã cập nhật buổi tập.",
         })
 
-        console.log("Toast displayed, attempting redirect...")
-
         try {
-          console.log("Trying router.push...")
           router.push(`/workouts/${workout.id}`)
 
           // Fallback redirect sau 1 giây nếu router.push không hoạt động
           setTimeout(() => {
-            console.log("Fallback redirect with window.location...")
             if (typeof window !== "undefined") {
               window.location.href = `/workouts/${workout.id}`
             }
           }, 1000)
         } catch (redirectError) {
-          console.error("Router.push failed:", redirectError)
           // Emergency fallback
           if (typeof window !== "undefined") {
             window.location.href = `/workouts/${workout.id}`
@@ -351,7 +340,6 @@ export default function EditWorkoutPage() {
         throw new Error("Không thể cập nhật buổi tập")
       }
     } catch (error) {
-      console.error("Lỗi khi cập nhật buổi tập:", error)
       toast({
         title: "Lỗi",
         description: "Đã xảy ra lỗi khi cập nhật buổi tập. Vui lòng thử lại.",
