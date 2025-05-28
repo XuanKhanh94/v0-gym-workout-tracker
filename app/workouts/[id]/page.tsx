@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronLeft, Edit, Trash2, Calendar, Clock, CheckCircle } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { ChevronLeft, Edit, Trash2, Calendar, Clock, CheckCircle, Image as ImageIcon } from "lucide-react"
 import { getWorkout, deleteWorkout, updateWorkout } from "@/lib/firebase-service"
 import { useToast } from "@/hooks/use-toast"
 import type { Workout } from "@/lib/types"
@@ -66,6 +67,8 @@ export default function WorkoutDetailPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const [updating, setUpdating] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imageUploading, setImageUploading] = useState(false)
 
   useEffect(() => {
     const fetchWorkout = async () => {
@@ -88,19 +91,48 @@ export default function WorkoutDetailPage() {
     fetchWorkout()
   }, [params.id, router, toast])
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0])
+    }
+  }
+
   const handleCompletedChange = async (completed: boolean) => {
     if (!workout) return
 
     setUpdating(true)
     try {
-      const success = await updateWorkout(workout.id, {
+      let imageUrl: string | null = workout.imageUrl || null
+
+      if (completed && imageFile) {
+        setImageUploading(true)
+        try {
+          imageUrl = await uploadImage(imageFile, workout.id)
+        } catch (error) {
+          toast({
+            title: "Lỗi",
+            description: "Đã xảy ra lỗi khi tải lên hình ảnh. Vui lòng thử lại.",
+            variant: "destructive",
+          })
+          setImageUploading(false)
+          setUpdating(false)
+          return
+        }
+        setImageUploading(false)
+      }
+
+      const updatedWorkout = {
         ...workout,
         completed,
         completedAt: completed ? new Date().toISOString() : null,
-      })
+        imageUrl: completed ? imageUrl : null,
+      }
+
+      const success = await updateWorkout(workout.id, updatedWorkout)
 
       if (success) {
-        setWorkout({ ...workout, completed, completedAt: completed ? new Date().toISOString() : null })
+        setWorkout(updatedWorkout)
+        setImageFile(null)
         toast({
           title: "Thành công",
           description: completed ? "Đã đánh dấu hoàn thành buổi tập." : "Đã bỏ đánh dấu hoàn thành.",
@@ -167,6 +199,7 @@ export default function WorkoutDetailPage() {
 
   const workoutDate = safeParseDate(workout.date)
   const isCompleted = workout.completed || false
+  const isCompletedWithImage = isCompleted && !!workout.imageUrl
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -194,19 +227,23 @@ export default function WorkoutDetailPage() {
         </div>
         <div className="flex gap-2">
           <Link href={`/workouts/${workout.id}/edit`}>
-            <Button variant="outline" size="sm" disabled={isCompleted}>
+            <Button variant="outline" size="sm" disabled={isCompletedWithImage || isCompleted}>
               <Edit className="mr-2 h-4 w-4" />
               Chỉnh sửa
             </Button>
           </Link>
-          <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleting || isCompleted}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDelete}
+            disabled={deleting || isCompletedWithImage || isCompleted}
+          >
             <Trash2 className="mr-2 h-4 w-4 text-destructive" />
             {deleting ? "Đang xóa..." : "Xóa"}
           </Button>
         </div>
       </div>
 
-      {/* Checkbox hoàn thành */}
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="flex items-center space-x-2">
@@ -214,7 +251,7 @@ export default function WorkoutDetailPage() {
               id="completed"
               checked={isCompleted}
               onCheckedChange={handleCompletedChange}
-              disabled={updating}
+              disabled={updating || isCompletedWithImage}
             />
             <label
               htmlFor="completed"
@@ -223,10 +260,38 @@ export default function WorkoutDetailPage() {
               {isCompleted ? "Đã hoàn thành buổi tập" : "Đánh dấu đã hoàn thành"}
             </label>
           </div>
+          {!isCompleted && (
+            <div className="mt-4">
+              <label htmlFor="image-upload" className="text-sm font-medium">
+                Tải lên hình ảnh (tùy chọn):
+              </label>
+              <div className="flex items-center gap-2 mt-2">
+                <Input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  disabled={updating || imageUploading}
+                  className="max-w-xs"
+                />
+                {imageUploading && <span className="text-sm text-muted-foreground">Đang tải lên...</span>}
+              </div>
+            </div>
+          )}
           {isCompleted && workout.completedAt && (
             <p className="text-xs text-muted-foreground mt-2">
               Hoàn thành lúc: {format(new Date(workout.completedAt), "dd/MM/yyyy HH:mm", { locale: vi })}
             </p>
+          )}
+          {isCompleted && workout.imageUrl && (
+            <div className="mt-4">
+              <p className="text-sm font-medium mb-2">Hình ảnh buổi tập:</p>
+              <img
+                src={workout.imageUrl}
+                alt="Hình ảnh buổi tập"
+                className="max-w-md w-full h-auto rounded-md"
+              />
+            </div>
           )}
         </CardContent>
       </Card>

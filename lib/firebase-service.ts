@@ -1,4 +1,5 @@
 import { db, auth } from "./firebase"
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import {
   collection,
   doc,
@@ -14,7 +15,7 @@ import {
   Timestamp,
 } from "firebase/firestore"
 import type { Workout, Exercise } from "./types"
-
+const storage = getStorage()
 // Kiểm tra xem chúng ta đang ở môi trường browser hay không
 const isBrowser = typeof window !== "undefined"
 
@@ -24,7 +25,6 @@ function convertTimestamp(timestamp: any): string {
     return new Date().toISOString()
   }
 
-  // Nếu là Firestore Timestamp
   if (timestamp && typeof timestamp.toDate === "function") {
     try {
       return timestamp.toDate().toISOString()
@@ -34,7 +34,6 @@ function convertTimestamp(timestamp: any): string {
     }
   }
 
-  // Nếu là string ISO
   if (typeof timestamp === "string") {
     try {
       const date = new Date(timestamp)
@@ -48,7 +47,6 @@ function convertTimestamp(timestamp: any): string {
     }
   }
 
-  // Nếu là Date object
   if (timestamp instanceof Date) {
     try {
       if (isNaN(timestamp.getTime())) {
@@ -61,7 +59,6 @@ function convertTimestamp(timestamp: any): string {
     }
   }
 
-  // Nếu là number (timestamp)
   if (typeof timestamp === "number") {
     try {
       const date = new Date(timestamp)
@@ -75,7 +72,6 @@ function convertTimestamp(timestamp: any): string {
     }
   }
 
-  // Fallback
   console.warn("Không thể chuyển đổi timestamp, sử dụng thời gian hiện tại:", timestamp)
   return new Date().toISOString()
 }
@@ -132,7 +128,6 @@ export async function getWorkout(id: string): Promise<Workout | null> {
     if (workoutSnap.exists()) {
       const data = workoutSnap.data()
 
-      // Kiểm tra xem buổi tập có thuộc về người dùng hiện tại không
       if (data.userId !== currentUser.uid) {
         console.error("Không có quyền truy cập buổi tập này")
         return null
@@ -169,7 +164,6 @@ export async function addWorkout(workoutData: Omit<Workout, "id">): Promise<stri
 
     const workoutsRef = collection(db, "workouts")
 
-    // Đảm bảo date là timestamp hợp lệ
     let processedDate: any
     try {
       if (typeof workoutData.date === "string") {
@@ -212,7 +206,6 @@ export async function updateWorkout(id: string, workoutData: Partial<Workout>): 
       return false
     }
 
-    // Kiểm tra xem buổi tập có thuộc về người dùng hiện tại không
     const workoutRef = doc(db, "workouts", id)
     const workoutSnap = await getDoc(workoutRef)
 
@@ -227,7 +220,6 @@ export async function updateWorkout(id: string, workoutData: Partial<Workout>): 
       return false
     }
 
-    // Xử lý date nếu có
     const updateData: any = { ...workoutData }
     if (workoutData.date) {
       try {
@@ -238,12 +230,10 @@ export async function updateWorkout(id: string, workoutData: Partial<Workout>): 
         }
       } catch (error) {
         console.error("Lỗi khi xử lý date trong update:", error)
-        // Giữ nguyên date cũ nếu có lỗi
         delete updateData.date
       }
     }
 
-    // Cập nhật buổi tập
     await updateDoc(workoutRef, {
       ...updateData,
       updatedAt: serverTimestamp(),
@@ -267,7 +257,6 @@ export async function deleteWorkout(id: string): Promise<boolean> {
       return false
     }
 
-    // Kiểm tra xem buổi tập có thuộc về người dùng hiện tại không
     const workoutRef = doc(db, "workouts", id)
     const workoutSnap = await getDoc(workoutRef)
 
@@ -280,7 +269,6 @@ export async function deleteWorkout(id: string): Promise<boolean> {
       return false
     }
 
-    // Xóa buổi tập
     await deleteDoc(workoutRef)
     return true
   } catch (error) {
@@ -311,7 +299,6 @@ export async function getExerciseLibrary(): Promise<Exercise[]> {
 // Thêm bài tập mới
 export async function addExercise(exerciseData: Omit<Exercise, "id">): Promise<string | null> {
   if (!isBrowser || !db || !auth) {
-
     return null
   }
 
@@ -402,4 +389,16 @@ export async function deleteExercise(id: string): Promise<boolean> {
   } catch (error) {
     throw error
   }
+}
+
+export async function getAllWorkouts(): Promise<Workout[]> {
+  const snapshot = await getDocs(collection(db, "workouts"))
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      date: convertTimestamp(data.date),
+    } as Workout
+  })
 }
