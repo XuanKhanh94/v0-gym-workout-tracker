@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronLeft, Plus, Trash2, CalendarIcon, Timer } from "lucide-react"
+import { ChevronLeft, Trash2, CalendarIcon, Timer } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
@@ -19,6 +19,11 @@ import { cn } from "@/lib/utils"
 // Firebase imports
 import { getWorkout, updateWorkout, getExerciseLibrary } from "@/lib/firebase-service"
 import { useToast } from "@/hooks/use-toast"
+
+// Components
+import { ExerciseSuggestions } from "@/components/exercise-suggestions"
+import { AddExerciseModal } from "@/components/add-exercise-modal"
+import { AddSetModal } from "@/components/add-set-modal"
 
 // Local type definitions
 interface Exercise {
@@ -41,7 +46,7 @@ interface Workout {
   categories?: string[]
   exercises: WorkoutExercise[]
   totalSets: number
-  duration?: number // Thêm duration field
+  duration?: number
   notes?: string
   userId: string
   createdAt: string
@@ -56,7 +61,7 @@ export default function EditWorkoutPage() {
   const [workoutName, setWorkoutName] = useState("")
   const [categories, setCategories] = useState<string[]>([])
   const [workoutDate, setWorkoutDate] = useState<Date>(new Date())
-  const [workoutDuration, setWorkoutDuration] = useState<number>(60) // Thời lượng tập tính bằng phút
+  const [workoutDuration, setWorkoutDuration] = useState<number>(60)
   const [notes, setNotes] = useState("")
   const [exercises, setExercises] = useState<
     Array<{
@@ -141,11 +146,11 @@ export default function EditWorkoutPage() {
     fetchData()
   }, [params.id, router, toast])
 
-  const addExercise = () => {
+  const handleAddExercise = (exerciseData: { name: string; sets: Array<{ reps: string; weight: string }> }) => {
     const newExercise = {
       id: Date.now().toString(),
-      name: "",
-      sets: [{ reps: "", weight: "" }],
+      name: exerciseData.name,
+      sets: exerciseData.sets,
     }
     setExercises([...exercises, newExercise])
   }
@@ -168,14 +173,22 @@ export default function EditWorkoutPage() {
     setShowSuggestionsMap((prev) => ({ ...prev, [exerciseId]: true }))
   }
 
-  const addSet = (exerciseId: string) => {
+  // const handleAddSet = (exerciseId: string, reps: string, weight: string) => {
+  //   setExercises(
+  //     exercises.map((exercise) =>
+  //       exercise.id === exerciseId ? { ...exercise, sets: [...exercise.sets, { reps, weight }] } : exercise,
+  //     ),
+  //   )
+  // }
+  const handleAddSet = (exerciseId: string, newSets: { reps: string; weight: string }[]) => {
     setExercises(
       exercises.map((exercise) =>
-        exercise.id === exerciseId ? { ...exercise, sets: [...exercise.sets, { reps: "", weight: "" }] } : exercise,
-      ),
+        exercise.id === exerciseId
+          ? { ...exercise, sets: [...exercise.sets, ...newSets] }
+          : exercise
+      )
     )
   }
-
   const removeSet = (exerciseId: string, setIndex: number) => {
     setExercises(
       exercises.map((exercise) =>
@@ -210,13 +223,22 @@ export default function EditWorkoutPage() {
     }
   }
 
+  const handleSelectSuggestedExercise = (exercise: Exercise) => {
+    const newExercise = {
+      id: Date.now().toString(),
+      name: exercise.name,
+      sets: [{ reps: "", weight: "" }],
+    }
+    setExercises([...exercises, newExercise])
+  }
+
   // Xử lý thay đổi thời lượng tập
   const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
 
     // Nếu input trống, set về 0
     if (value === "" || value === null || value === undefined) {
-      setWorkoutDuration("")
+      setWorkoutDuration(0)
       return
     }
 
@@ -287,19 +309,44 @@ export default function EditWorkoutPage() {
         categories: categories,
         exercises: exercises.map(({ name, sets }) => ({ name, sets })),
         totalSets,
-        duration: workoutDuration, // Lưu duration
+        duration: workoutDuration,
         notes,
       }
+
+      console.log("Form submitted - starting save process")
+      console.log("Setting saving state to true")
+      console.log("Starting Firebase update...")
 
       // Cập nhật buổi tập trong Firestore
       const success = await updateWorkout(workout.id, workoutData)
 
       if (success) {
+        console.log("Firebase update successful!")
         toast({
           title: "Thành công",
           description: "Đã cập nhật buổi tập.",
         })
-        router.push(`/workouts/${workout.id}`)
+
+        console.log("Toast displayed, attempting redirect...")
+
+        try {
+          console.log("Trying router.push...")
+          router.push(`/workouts/${workout.id}`)
+
+          // Fallback redirect sau 1 giây nếu router.push không hoạt động
+          setTimeout(() => {
+            console.log("Fallback redirect with window.location...")
+            if (typeof window !== "undefined") {
+              window.location.href = `/workouts/${workout.id}`
+            }
+          }, 1000)
+        } catch (redirectError) {
+          console.error("Router.push failed:", redirectError)
+          // Emergency fallback
+          if (typeof window !== "undefined") {
+            window.location.href = `/workouts/${workout.id}`
+          }
+        }
       } else {
         throw new Error("Không thể cập nhật buổi tập")
       }
@@ -389,7 +436,7 @@ export default function EditWorkoutPage() {
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              Hiện tại: {workoutDuration} phút
+              Thời lượng dự kiến cho buổi tập (1-300 phút). Hiện tại: {workoutDuration} phút
             </p>
           </div>
 
@@ -433,13 +480,13 @@ export default function EditWorkoutPage() {
           </div>
         </div>
 
+        {/* Exercise Suggestions */}
+        <ExerciseSuggestions categories={categories} onSelectExercise={handleSelectSuggestedExercise} />
+
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Bài tập</h2>
-            <Button type="button" onClick={addExercise} variant="outline" size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Thêm bài tập
-            </Button>
+            <AddExerciseModal onAddExercise={handleAddExercise} exerciseLibrary={exerciseLibrary} />
           </div>
 
           {exercises.length === 0 ? (
@@ -499,9 +546,10 @@ export default function EditWorkoutPage() {
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <Label>Sets</Label>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => addSet(exercise.id)}>
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                          <AddSetModal
+                            onAddSets={(sets) => handleAddSet(exercise.id, sets)}
+                            currentSetCount={exercise.sets.length}
+                          />
                         </div>
 
                         {exercise.sets.map((set, setIndex) => (

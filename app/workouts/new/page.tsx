@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { ChevronLeft, Plus, Trash2, CalendarIcon, Timer } from "lucide-react"
+import { ChevronLeft, Trash2, CalendarIcon, Timer } from "lucide-react"
 import { addWorkout, getExerciseLibrary } from "@/lib/firebase-service"
 import { useToast } from "@/hooks/use-toast"
 import type { Exercise } from "@/lib/types"
@@ -22,6 +22,7 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { ExerciseSuggestions } from "@/components/exercise-suggestions"
 import { AddExerciseModal } from "@/components/add-exercise-modal"
+import { AddSetModal } from "@/components/add-set-modal"
 
 export default function NewWorkoutPage() {
   const router = useRouter()
@@ -72,14 +73,6 @@ export default function NewWorkoutPage() {
     fetchExerciseLibrary()
   }, [searchParams])
 
-  const addExercise = () => {
-    const newExercise = {
-      id: Date.now().toString(),
-      name: "",
-      sets: [{ reps: "", weight: "" }],
-    }
-    setExercises([...exercises, newExercise])
-  }
   const removeExercise = (id: string) => {
     setExercises(exercises.filter((exercise) => exercise.id !== id))
   }
@@ -98,14 +91,22 @@ export default function NewWorkoutPage() {
     setShowSuggestionsMap((prev) => ({ ...prev, [exerciseId]: true })) // focus input show gợi ý
   }
 
-  const addSet = (exerciseId: string) => {
+  // const handleAddSet = (exerciseId: string, reps: string, weight: string) => {
+  //   setExercises(
+  //     exercises.map((exercise) =>
+  //       exercise.id === exerciseId ? { ...exercise, sets: [...exercise.sets, { reps, weight }] } : exercise,
+  //     ),
+  //   )
+  // }
+  const handleAddSet = (exerciseId: string, newSets: { reps: string; weight: string }[]) => {
     setExercises(
       exercises.map((exercise) =>
-        exercise.id === exerciseId ? { ...exercise, sets: [...exercise.sets, { reps: "", weight: "" }] } : exercise,
-      ),
+        exercise.id === exerciseId
+          ? { ...exercise, sets: [...exercise.sets, ...newSets] }
+          : exercise
+      )
     )
   }
-
   const removeSet = (exerciseId: string, setIndex: number) => {
     setExercises(
       exercises.map((exercise) =>
@@ -492,9 +493,14 @@ export default function NewWorkoutPage() {
                       <div>
                         <div className="flex justify-between items-center mb-2">
                           <Label>Sets</Label>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => addSet(exercise.id)}>
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                          {/* <AddSetModal
+                            onAddSet={(reps, weight) => handleAddSet(exercise.id, reps, weight)}
+                            setNumber={exercise.sets.length + 1}
+                          /> */}
+                          <AddSetModal
+                            onAddSets={(sets) => handleAddSet(exercise.id, sets)}
+                            currentSetCount={exercise.sets.length}
+                          />
                         </div>
 
                         {exercise.sets.map((set, setIndex) => (

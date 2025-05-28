@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { getExerciseLibrary } from "@/lib/firebase-service"
 import type { Exercise } from "@/lib/types"
 
@@ -35,8 +36,8 @@ export function ExerciseSuggestions({ categories, onSelectExercise }: ExerciseSu
                     ),
                 )
 
-                // Limit to 6 suggestions
-                setExercises(filteredExercises.slice(0, 6))
+                // Hiển thị tất cả bài tập liên quan, không giới hạn
+                setExercises(filteredExercises)
             } catch (error) {
                 console.error("Error fetching exercise suggestions:", error)
             } finally {
@@ -55,7 +56,9 @@ export function ExerciseSuggestions({ categories, onSelectExercise }: ExerciseSu
         <Card className="mb-6">
             <CardHeader>
                 <CardTitle className="text-lg">Bài tập gợi ý</CardTitle>
-                <p className="text-sm text-muted-foreground">Dựa trên phân loại: {categories.join(", ")}</p>
+                <p className="text-sm text-muted-foreground">
+                    Dựa trên phân loại: {categories.join(", ")} ({exercises.length} bài tập)
+                </p>
             </CardHeader>
             <CardContent>
                 {loading ? (
@@ -63,23 +66,25 @@ export function ExerciseSuggestions({ categories, onSelectExercise }: ExerciseSu
                 ) : exercises.length === 0 ? (
                     <p className="text-muted-foreground">Không có bài tập gợi ý cho phân loại này.</p>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {exercises.map((exercise) => (
-                            <div
-                                key={exercise.id}
-                                className="p-3 border rounded-lg hover:bg-muted cursor-pointer transition-colors"
-                                onClick={() => onSelectExercise(exercise)}
-                            >
-                                <h4 className="font-medium text-sm mb-1">{exercise.name}</h4>
-                                <Badge variant="outline" className="text-xs">
-                                    {exercise.category}
-                                </Badge>
-                                {exercise.description && (
-                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{exercise.description}</p>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                    <ScrollArea className="h-64 w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pr-4">
+                            {exercises.map((exercise) => (
+                                <div
+                                    key={exercise.id}
+                                    className="p-3 border rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                                    onClick={() => onSelectExercise(exercise)}
+                                >
+                                    <h4 className="font-medium text-sm mb-1">{exercise.name}</h4>
+                                    <Badge variant="outline" className="text-xs">
+                                        {exercise.category}
+                                    </Badge>
+                                    {exercise.description && (
+                                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{exercise.description}</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
                 )}
             </CardContent>
         </Card>
