@@ -8,8 +8,9 @@ import { vi } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronLeft, Edit, Trash2, Calendar, Clock } from "lucide-react"
-import { getWorkout, deleteWorkout } from "@/lib/firebase-service"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ChevronLeft, Edit, Trash2, Calendar, Clock, CheckCircle } from "lucide-react"
+import { getWorkout, deleteWorkout, updateWorkout } from "@/lib/firebase-service"
 import { useToast } from "@/hooks/use-toast"
 import type { Workout } from "@/lib/types"
 
@@ -64,6 +65,7 @@ export default function WorkoutDetailPage() {
   const [workout, setWorkout] = useState<Workout | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+  const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
     const fetchWorkout = async () => {
@@ -85,6 +87,38 @@ export default function WorkoutDetailPage() {
 
     fetchWorkout()
   }, [params.id, router, toast])
+
+  const handleCompletedChange = async (completed: boolean) => {
+    if (!workout) return
+
+    setUpdating(true)
+    try {
+      const success = await updateWorkout(workout.id, {
+        ...workout,
+        completed,
+        completedAt: completed ? new Date().toISOString() : null,
+      })
+
+      if (success) {
+        setWorkout({ ...workout, completed, completedAt: completed ? new Date().toISOString() : null })
+        toast({
+          title: "Thành công",
+          description: completed ? "Đã đánh dấu hoàn thành buổi tập." : "Đã bỏ đánh dấu hoàn thành.",
+        })
+      } else {
+        throw new Error("Không thể cập nhật trạng thái")
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái:", error)
+      toast({
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại.",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdating(false)
+    }
+  }
 
   const handleDelete = async () => {
     if (!workout) return
@@ -132,6 +166,7 @@ export default function WorkoutDetailPage() {
   }
 
   const workoutDate = safeParseDate(workout.date)
+  const isCompleted = workout.completed || false
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -146,7 +181,10 @@ export default function WorkoutDetailPage() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">{workout.name}</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            {workout.name}
+            {isCompleted && <CheckCircle className="h-6 w-6 text-green-500" />}
+          </h1>
           <div className="flex items-center gap-2 text-muted-foreground mt-1">
             <Calendar className="h-4 w-4" />
             <span>{format(workoutDate, "EEEE, dd/MM/yyyy", { locale: vi })}</span>
@@ -156,23 +194,49 @@ export default function WorkoutDetailPage() {
         </div>
         <div className="flex gap-2">
           <Link href={`/workouts/${workout.id}/edit`}>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled={isCompleted}>
               <Edit className="mr-2 h-4 w-4" />
               Chỉnh sửa
             </Button>
           </Link>
-          <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleting}>
+          <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleting || isCompleted}>
             <Trash2 className="mr-2 h-4 w-4 text-destructive" />
             {deleting ? "Đang xóa..." : "Xóa"}
           </Button>
         </div>
       </div>
 
+      {/* Checkbox hoàn thành */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="completed"
+              checked={isCompleted}
+              onCheckedChange={handleCompletedChange}
+              disabled={updating}
+            />
+            <label
+              htmlFor="completed"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              {isCompleted ? "Đã hoàn thành buổi tập" : "Đánh dấu đã hoàn thành"}
+            </label>
+          </div>
+          {isCompleted && workout.completedAt && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Hoàn thành lúc: {format(new Date(workout.completedAt), "dd/MM/yyyy HH:mm", { locale: vi })}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="flex flex-wrap gap-2 mb-6">
-        <Badge>{workout.category}</Badge>
+        <Badge variant={isCompleted ? "default" : "secondary"}>{workout.category}</Badge>
         <Badge variant="outline">{workout.exercises?.length || 0} bài tập</Badge>
         <Badge variant="outline">{workout.totalSets || 0} sets</Badge>
         <Badge variant="outline">{workout.duration || 0} phút</Badge>
+        {isCompleted && <Badge className="bg-green-500">Đã hoàn thành</Badge>}
       </div>
 
       {workout.notes && (
@@ -189,7 +253,7 @@ export default function WorkoutDetailPage() {
       <h2 className="text-xl font-semibold mb-4">Bài tập</h2>
       <div className="space-y-4">
         {workout.exercises?.map((exercise, index) => (
-          <Card key={index}>
+          <Card key={index} className={isCompleted ? "opacity-75" : ""}>
             <CardHeader className="pb-2">
               <CardTitle>{exercise.name}</CardTitle>
             </CardHeader>

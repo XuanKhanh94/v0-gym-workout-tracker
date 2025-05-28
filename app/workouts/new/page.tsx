@@ -20,6 +20,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { ExerciseSuggestions } from "@/components/exercise-suggestions"
+import { AddExerciseModal } from "@/components/add-exercise-modal"
 
 export default function NewWorkoutPage() {
   const router = useRouter()
@@ -29,7 +31,7 @@ export default function NewWorkoutPage() {
   const [workoutName, setWorkoutName] = useState("")
   const [categories, setCategories] = useState<string[]>([])
   const [workoutDate, setWorkoutDate] = useState<Date>(new Date())
-  const [workoutDuration, setWorkoutDuration] = useState<number>(60) // Thời lượng tập tính bằng phút
+  const [workoutDuration, setWorkoutDuration] = useState<number>(60) // Thời lượng tập tính bằng phút, mặc định 60 phút
   const [notes, setNotes] = useState("")
   const [exercises, setExercises] = useState<
     Array<{
@@ -57,8 +59,10 @@ export default function NewWorkoutPage() {
       try {
         setLibraryLoading(true)
         const data = await getExerciseLibrary()
+        console.log(`Đã tải ${data.length} bài tập từ thư viện`)
         setExerciseLibrary(data)
       } catch (error: any) {
+        console.error("Lỗi khi lấy thư viện bài tập:", error)
         setError(`Không thể tải thư viện bài tập: ${error.message}`)
       } finally {
         setLibraryLoading(false)
@@ -142,7 +146,7 @@ export default function NewWorkoutPage() {
 
     // Nếu input trống, set về 0
     if (value === "" || value === null || value === undefined) {
-      setWorkoutDuration("")
+      setWorkoutDuration(0)
       return
     }
 
@@ -229,10 +233,12 @@ export default function NewWorkoutPage() {
       }
 
       setDebugInfo(`Đang thêm buổi tập với userId: ${user.uid}`)
+      console.log("Đang thêm buổi tập:", JSON.stringify(workoutData, null, 2))
 
       const workoutId = await addWorkout(workoutData)
 
       if (workoutId) {
+        console.log("Đã thêm buổi tập thành công với id:", workoutId)
         toast({
           title: "Thành công",
           description: "Đã thêm buổi tập mới.",
@@ -353,7 +359,7 @@ export default function NewWorkoutPage() {
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              Hiện tại: {workoutDuration} phút
+              Thời lượng dự kiến cho buổi tập (1-300 phút). Hiện tại: {workoutDuration} phút
             </p>
           </div>
 
@@ -386,6 +392,18 @@ export default function NewWorkoutPage() {
             )}
           </div>
 
+          <ExerciseSuggestions
+            categories={categories}
+            onSelectExercise={(exercise) => {
+              const newExercise = {
+                id: Date.now().toString(),
+                name: exercise.name,
+                sets: [{ reps: "", weight: "" }],
+              }
+              setExercises([...exercises, newExercise])
+            }}
+          />
+
           <div className="grid gap-3">
             <Label htmlFor="notes">Ghi chú</Label>
             <Textarea
@@ -400,10 +418,17 @@ export default function NewWorkoutPage() {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Bài tập</h2>
-            <Button type="button" onClick={addExercise} variant="outline" size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Thêm bài tập
-            </Button>
+            <AddExerciseModal
+              onAddExercise={(exerciseData) => {
+                const newExercise = {
+                  id: Date.now().toString(),
+                  name: exerciseData.name,
+                  sets: exerciseData.sets,
+                }
+                setExercises([...exercises, newExercise])
+              }}
+              exerciseLibrary={exerciseLibrary}
+            />
           </div>
 
           {libraryLoading ? (
