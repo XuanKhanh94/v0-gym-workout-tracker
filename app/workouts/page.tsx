@@ -53,7 +53,6 @@ export default function WorkoutsPage() {
 
   const handleUpload = (urls: string[]) => {
     setUploadedUrls(urls)
-    console.log("Ảnh đã upload:", urls)
   }
 
   return (
@@ -76,22 +75,6 @@ export default function WorkoutsPage() {
           </Link>
         </div>
       </div>
-
-      {/* THÊM upload ảnh */}
-      {/* <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-          <ImageIcon className="w-5 h-5" />
-          Tải ảnh lên Cloudinary
-        </h2>
-        <Upload multiple accept="image/*" maxFiles={3} onUpload={handleUpload} />
-        {uploadedUrls.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-            {uploadedUrls.map((url, index) => (
-              <img key={index} src={url} alt={`uploaded-${index}`} className="rounded shadow" />
-            ))}
-          </div>
-        )}
-      </div> */}
 
       {error && (
         <Alert variant="destructive" className="mb-4">

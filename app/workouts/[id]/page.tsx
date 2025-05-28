@@ -93,13 +93,8 @@ export default function WorkoutDetailPage() {
     fetchWorkout()
   }, [params.id, router, toast])
 
-  // const handleUpload = (urls: string[]) => {
-  //   setUploadedUrls(urls)
-  //   console.log("Ảnh đã upload:", urls)
-  // }
   const handleUpload = async (urls: string[]) => {
     setUploadedUrls(urls)
-    console.log("Ảnh đã upload:", urls)
 
     if (!workout || urls.length === 0) return
 
