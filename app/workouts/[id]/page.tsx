@@ -286,17 +286,29 @@ export default function WorkoutDetailPage() {
               {isCompleted ? "Đã hoàn thành buổi tập" : "Đánh dấu đã hoàn thành"}
             </label>
           </div>
-          {!isCompleted && (
+          {!isCompleted && uploadedUrls.length === 0 && !workout.imageUrl && (
 
             <div className="mb-6">
               <Upload multiple accept="image/*" maxFiles={3} onUpload={handleUpload} />
-              {uploadedUrls.length > 0 && (
+              {/* {uploadedUrls.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                   {uploadedUrls.map((url, index) => (
                     <img key={index} src={url} alt={`uploaded-${index}`} className="rounded shadow" />
                   ))}
                 </div>
+              )} */}
+              {(uploadedUrls.length > 0 || workout.imageUrl) && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium mb-2">Hình ảnh buổi tập:</p>
+                  <img
+                    src={uploadedUrls[0] || workout.imageUrl}
+                    alt="Hình ảnh buổi tập"
+                    className="rounded-md w-32 h-32 object-cover shadow"
+                  />
+                </div>
               )}
+
+
             </div>
           )}
           {isCompleted && workout.completedAt && (
@@ -305,12 +317,12 @@ export default function WorkoutDetailPage() {
             </p>
           )}
           {isCompleted && workout.imageUrl && (
-            <div className="mt-4">
+            <div className="flex justify-start">
               <p className="text-sm font-medium mb-2">Hình ảnh buổi tập:</p>
               <img
                 src={workout.imageUrl}
                 alt="Hình ảnh buổi tập"
-                className="rounded-md w-full max-w-xs object-cover"
+                className="rounded-md w-32 h-32 object-cover shadow"
               />
             </div>
           )}
