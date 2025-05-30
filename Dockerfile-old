@@ -1,0 +1,43 @@
+# 1. Image builder
+FROM node:18-alpine AS builder
+
+# Cài pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Tạo thư mục làm việc
+WORKDIR /app
+
+# Copy package files trước (để cache tốt hơn)
+COPY package.json pnpm-lock.yaml ./
+
+# Cài dependencies
+RUN pnpm install
+
+# Copy toàn bộ project
+COPY . .
+
+# Build Next.js
+RUN pnpm build
+
+# ----------------------------------------
+# 2. Image production (chạy gọn nhẹ)
+FROM node:18-alpine AS runner
+
+# Cài pnpm lại trong runner nếu cần (hoặc dùng npm cũng được)
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Copy từ builder
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
+# Đặt biến môi trường PORT cho app
+ENV PORT=4000
+# Mở cổng 3000
+EXPOSE 4000
+
+# Start app
+CMD ["pnpm", "start"]
