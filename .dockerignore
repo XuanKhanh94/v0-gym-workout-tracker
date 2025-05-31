@@ -1,0 +1,33 @@
+# Node modules & build outputs
+node_modules
+.next
+dist
+out
+
+# Logs & OS files
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Env files (nếu không cần copy vào image)
+.env
+.env.*   # ví dụ: .env.production, .env.local
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+
+# Editor/IDE
+.vscode
+.idea
+*.swp
+*.swo
+*.bak
+*.tmp
